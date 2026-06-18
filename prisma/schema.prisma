@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  kakaoId   String?  @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  holdings          Holding[]
+  vrStrategies      VrStrategy[]
+  brokerCredentials BrokerCredential[]
+}
+
+model Holding {
+  id           String   @id @default(cuid())
+  userId       String
+  ticker       String
+  name         String
+  quantity     Float
+  avgPrice     Float
+  currentPrice Float?
+  currency     String   @default("KRW")
+  market       String?
+  broker       String   @default("manual")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vrStrategies VrStrategy[]
+  snapshots   Snapshot[]
+
+  @@unique([userId, ticker])
+}
+
+model VrStrategy {
+  id          String   @id @default(cuid())
+  holdingId   String
+  userId      String
+  vValue      Float
+  bandPct     Float    @default(0.15)
+  divisorG    Int      @default(10)
+  contribution Float   @default(0)
+  pool        Float    @default(0)
+  currentQty  Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  holding Holding @relation(fields: [holdingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([holdingId])
+}
+
+model Snapshot {
+  id          String   @id @default(cuid())
+  holdingId   String
+  evaluatedAt DateTime @default(now())
+  vValue      Float
+  pool        Float
+  currentQty  Float
+  minBand     Float
+  maxBand     Float
+  data        Json?
+
+  holding Holding @relation(fields: [holdingId], references: [id], onDelete: Cascade)
+}
+
+model BrokerCredential {
+  id           String @id @default(cuid())
+  userId       String
+  broker       String
+  encryptedKey String
+  label        String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, broker])
+}
