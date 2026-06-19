@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { searchStock, fetchCurrentPrice } from "@/lib/stockApi";
+import { getUserId } from "@/lib/getUserId";
 
-const DEFAULT_USER_ID = "default";
-
-async function ensureDefaultUser() {
-  const user = await prisma.user.findUnique({ where: { id: DEFAULT_USER_ID } });
-  if (!user) {
-    return prisma.user.create({
-      data: { id: DEFAULT_USER_ID, email: "default@local.dev" },
-    });
-  }
-  return user;
+async function requireUserId(): Promise<string> {
+  const id = await getUserId();
+  if (!id) throw new Error("Unauthorized");
+  return id;
 }
 
 export async function GET() {
-  await ensureDefaultUser();
+  const userId = await requireUserId();
   const holdings = await prisma.holding.findMany({
-    where: { userId: DEFAULT_USER_ID },
+    where: { userId },
     orderBy: { updatedAt: "desc" },
     include: { vrStrategies: true },
   });
@@ -25,14 +20,14 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  await ensureDefaultUser();
+  const userId = await requireUserId();
   const body = await req.json();
   const { name, quantity, avgPrice, currency, broker } = body;
 
   let ticker = body.ticker || "";
   let currentPrice: number | null = null;
-
   let market: string | null = null;
+
   if (!ticker && name) {
     const result = await searchStock(name);
     if (result) {
@@ -44,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const holding = await prisma.holding.create({
     data: {
-      userId: DEFAULT_USER_ID,
+      userId,
       ticker: ticker || name,
       name,
       quantity,

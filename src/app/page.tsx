@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession, signOut } from "next-auth/react";
 import HoldingCard from "@/components/HoldingCard";
 import CsvUploader from "@/components/CsvUploader";
 import ContextMenu from "@/components/ContextMenu";
@@ -21,6 +22,7 @@ interface Holding {
 type ColCount = 1 | 2 | 3 | 4;
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", quantity: "", avgPrice: "", currency: "KRW", broker: "manual" });
@@ -125,6 +127,14 @@ export default function DashboardPage() {
           >
             {showForm ? "취소" : "+ 종목 추가"}
           </button>
+          {session?.user?.email && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span className="hidden sm:inline">{session.user.email}</span>
+              <button onClick={() => signOut()} className="text-xs text-gray-400 hover:text-red-500">
+                로그아웃
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

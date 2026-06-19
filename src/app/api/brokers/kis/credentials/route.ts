@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { encrypt, decrypt } from "@/lib/crypto";
+import { getUserId } from "@/lib/getUserId";
 
-const DEFAULT_USER_ID = "default";
+async function requireUserId(): Promise<string> {
+  const id = await getUserId();
+  if (!id) throw new Error("Unauthorized");
+  return id;
+}
 
 export async function GET() {
+  const userId = await requireUserId();
   const cred = await prisma.brokerCredential.findUnique({
-    where: { userId_broker: { userId: DEFAULT_USER_ID, broker: "kis" } },
+    where: { userId_broker: { userId, broker: "kis" } },
   });
   if (!cred) return NextResponse.json({ hasCredentials: false });
 
@@ -24,6 +30,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const userId = await requireUserId();
   const body = await req.json();
   const { appKey, appSecret, accNo } = body;
 
@@ -34,13 +41,8 @@ export async function POST(req: NextRequest) {
   const encrypted = encrypt(JSON.stringify({ appKey, appSecret, accNo }));
 
   await prisma.brokerCredential.upsert({
-    where: { userId_broker: { userId: DEFAULT_USER_ID, broker: "kis" } },
-    create: {
-      userId: DEFAULT_USER_ID,
-      broker: "kis",
-      encryptedKey: encrypted,
-      label: "KIS",
-    },
+    where: { userId_broker: { userId, broker: "kis" } },
+    create: { userId, broker: "kis", encryptedKey: encrypted, label: "KIS" },
     update: { encryptedKey: encrypted, label: "KIS" },
   });
 
@@ -48,8 +50,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
+  const userId = await requireUserId();
   await prisma.brokerCredential.deleteMany({
-    where: { userId: DEFAULT_USER_ID, broker: "kis" },
+    where: { userId, broker: "kis" },
   });
   return NextResponse.json({ ok: true });
 }

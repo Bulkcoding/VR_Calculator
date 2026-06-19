@@ -2,14 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { decrypt } from "@/lib/crypto";
 import { fetchKisHoldings } from "@/lib/kisApi";
+import { getUserId } from "@/lib/getUserId";
 
-const DEFAULT_USER_ID = "default";
+async function requireUserId(): Promise<string> {
+  const id = await getUserId();
+  if (!id) throw new Error("Unauthorized");
+  return id;
+}
 
 export async function POST() {
-  const cred = await prisma.brokerCredential.findUnique({
-    where: { userId_broker: { userId: DEFAULT_USER_ID, broker: "kis" } },
-  });
+  const userId = await requireUserId();
 
+  const cred = await prisma.brokerCredential.findUnique({
+    where: { userId_broker: { userId, broker: "kis" } },
+  });
   if (!cred) {
     return NextResponse.json({ error: "KIS credentials not found" }, { status: 400 });
   }
@@ -33,7 +39,7 @@ export async function POST() {
 
   for (const h of result.holdings) {
     const existing = await prisma.holding.findUnique({
-      where: { userId_ticker: { userId: DEFAULT_USER_ID, ticker: h.ticker } },
+      where: { userId_ticker: { userId, ticker: h.ticker } },
     });
 
     if (existing) {
@@ -51,7 +57,7 @@ export async function POST() {
     } else {
       await prisma.holding.create({
         data: {
-          userId: DEFAULT_USER_ID,
+          userId,
           ticker: h.ticker,
           name: h.name,
           quantity: h.quantity,
