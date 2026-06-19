@@ -36,6 +36,7 @@ model Holding {
 
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   vrStrategies VrStrategy[]
+  vrCycles    VrCycle[]
   snapshots   Snapshot[]
 
   @@unique([userId, ticker])
@@ -58,6 +59,29 @@ model VrStrategy {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([holdingId])
+}
+
+model VrCycle {
+  id           String   @id @default(cuid())
+  holdingId    String
+  cycleNumber  Int
+  startDate    DateTime @default(now())
+  endDate      DateTime?
+  vValue       Float
+  bandPct      Float
+  divisorG     Int
+  contribution Float
+  pool         Float
+  currentQty   Float
+  minBand      Float
+  maxBand      Float
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  holding Holding @relation(fields: [holdingId], references: [id], onDelete: Cascade)
+
+  @@unique([holdingId, cycleNumber])
+  @@index([holdingId])
 }
 
 model Snapshot {
