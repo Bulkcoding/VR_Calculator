@@ -6,6 +6,8 @@ export interface StockSearchResult {
 
 export interface ChartPoint {
   date: string;
+  time: string;
+  timestamp: number;
   price: number;
   open: number | null;
   high: number | null;
@@ -72,19 +74,43 @@ async function tryYahooCurrent(symbol: string): Promise<number | null> {
   return null;
 }
 
+interface RangeConfig {
+  interval: string;
+  includeExtended: boolean;
+}
+
+const RANGE_CONFIG: Record<string, RangeConfig> = {
+  "1d": { interval: "5m", includeExtended: true },
+  "5d": { interval: "30m", includeExtended: true },
+  "1mo": { interval: "1d", includeExtended: false },
+  "3mo": { interval: "1d", includeExtended: false },
+  "6mo": { interval: "1d", includeExtended: false },
+  "1y": { interval: "1d", includeExtended: false },
+  "2y": { interval: "1wk", includeExtended: false },
+  "5y": { interval: "1wk", includeExtended: false },
+};
+
 export async function fetchChartData(ticker: string, range: string = "1mo"): Promise<ChartData | null> {
-  const validRanges = ["1mo", "3mo", "6mo", "1y", "2y", "5y"];
-  const safeRange = validRanges.includes(range) ? range : "1mo";
+  const safeRange = RANGE_CONFIG[range] ? range : "1mo";
+  const config = RANGE_CONFIG[safeRange];
 
   for (const symbol of buildSymbols(ticker)) {
-    const data = await tryYahooChart(symbol, safeRange);
+    const data = await tryYahooChart(symbol, safeRange, config.interval);
     if (data) {
       const points = data.points;
       if (points.length < 2) continue;
-      const min = Math.min(...points.map((p) => p.price));
-      const max = Math.max(...points.map((p) => p.price));
-      const first = points[0].price;
-      const last = points[points.length - 1].price;
+
+      const allValues: number[] = [];
+      for (const p of points) {
+        allValues.push(p.close);
+        if (p.high != null) allValues.push(p.high);
+        if (p.low != null) allValues.push(p.low);
+      }
+      const min = Math.min(...allValues);
+      const max = Math.max(...allValues);
+
+      const first = points[0].close;
+      const last = points[points.length - 1].close;
       const change = last - first;
       const changePct = first > 0 ? (change / first) * 100 : 0;
       return { points, range: safeRange, symbol, min, max, change, changePct };
@@ -93,16 +119,19 @@ export async function fetchChartData(ticker: string, range: string = "1mo"): Pro
   return null;
 }
 
-async function tryYahooChart(symbol: string, range: string): Promise<{ points: ChartPoint[] } | null> {
+async function tryYahooChart(
+  symbol: string,
+  range: string,
+  interval: string
+): Promise<{ points: ChartPoint[] } | null> {
   try {
-    const res = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=${range}`,
-      {
-        headers: { "User-Agent": "Mozilla/5.0" },
-        signal: AbortSignal.timeout(6000),
-        cache: "no-store",
-      }
-    );
+    const includePrePost = range === "1d" || range === "5d" ? "&includePrePost=true" : "";
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}${includePrePost}`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(6000),
+      cache: "no-store",
+    });
     const data = await res.json();
     const result = data?.chart?.result?.[0];
     if (!result) return null;
@@ -119,8 +148,11 @@ async function tryYahooChart(symbol: string, range: string): Promise<{ points: C
     for (let i = 0; i < timestamps.length; i++) {
       const c = closes[i];
       if (c == null) continue;
+      const d = new Date(timestamps[i] * 1000);
       points.push({
-        date: new Date(timestamps[i] * 1000).toISOString().slice(0, 10),
+        date: d.toISOString().slice(0, 10),
+        time: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+        timestamp: timestamps[i],
         price: c,
         open: opens[i] ?? null,
         high: highs[i] ?? null,

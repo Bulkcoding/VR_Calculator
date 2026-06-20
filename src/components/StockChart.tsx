@@ -12,6 +12,7 @@ interface StockChartProps {
 }
 
 const RANGES = [
+  { label: "1D", value: "1d" },
   { label: "1M", value: "1mo" },
   { label: "3M", value: "3mo" },
   { label: "6M", value: "6mo" },
@@ -148,8 +149,13 @@ export default function StockChart({
     setHoverIndex(null);
   };
 
-  const firstDate = data?.points[0]?.date ?? "";
-  const lastDate = data?.points[data.points.length - 1]?.date ?? "";
+  const isIntraday = range === "1d";
+  const firstLabel = data
+    ? (isIntraday ? data.points[0]?.time ?? "" : data.points[0]?.date ?? "")
+    : "";
+  const lastLabel = data
+    ? (isIntraday ? data.points[data.points.length - 1]?.time ?? "" : data.points[data.points.length - 1]?.date ?? "")
+    : "";
   const hoverPoint = hoverIndex !== null && data ? data.points[hoverIndex] : null;
   const hoverX = hoverIndex !== null ? stepX * hoverIndex : 0;
   const hoverY = hoverPoint && path ? priceToY(hoverPoint.price, path.min, path.max, height, pad) : 0;
@@ -175,11 +181,11 @@ export default function StockChart({
         </div>
         {data && (
           <div className="flex items-center gap-3 text-[11px] text-gray-400">
-            <span>{firstDate}</span>
+            <span>{firstLabel}</span>
             <span className={`font-semibold ${data.change >= 0 ? "text-green-600" : "text-red-500"}`}>
               {data.change >= 0 ? "+" : ""}{currencySymbol}{data.change.toFixed(2)} ({data.changePct >= 0 ? "+" : ""}{data.changePct.toFixed(2)}%)
             </span>
-            <span>{lastDate}</span>
+            <span>{lastLabel}</span>
           </div>
         )}
       </div>
@@ -274,9 +280,9 @@ export default function StockChart({
           </svg>
         )}
 
-        {data && (
-          <div className="absolute top-1 right-1 text-[10px] text-gray-400 bg-white/80 px-1.5 py-0.5 rounded pointer-events-none">
-            {symbol && <span className="font-semibold">{symbol}</span>}
+        {data && !hoverPoint && symbol && (
+          <div className="absolute bottom-1 left-1 text-[10px] text-gray-400 bg-white/80 px-1.5 py-0.5 rounded pointer-events-none">
+            <span className="font-semibold">{symbol}</span>
           </div>
         )}
 
@@ -285,8 +291,9 @@ export default function StockChart({
           <div
             className="absolute z-20 top-1 right-1 pointer-events-none bg-white/95 border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[160px]"
           >
-            <div className="font-semibold text-gray-900 mb-1.5 pb-1 border-b border-gray-100">
-              {hoverPoint.date}
+            <div className="font-semibold text-gray-900 mb-1.5 pb-1 border-b border-gray-100 flex items-center justify-between gap-2">
+              <span>{hoverPoint.date}</span>
+              {isIntraday && <span className="text-gray-400 font-normal">{hoverPoint.time}</span>}
             </div>
             <div className="space-y-0.5">
               <div className="flex justify-between gap-3">
