@@ -7,6 +7,11 @@ export interface StockSearchResult {
 export interface ChartPoint {
   date: string;
   price: number;
+  open: number | null;
+  high: number | null;
+  low: number | null;
+  close: number;
+  volume: number | null;
 }
 
 export interface ChartData {
@@ -102,7 +107,12 @@ async function tryYahooChart(symbol: string, range: string): Promise<{ points: C
     const result = data?.chart?.result?.[0];
     if (!result) return null;
     const timestamps: number[] = result.timestamp || [];
-    const closes: (number | null)[] = result.indicators?.quote?.[0]?.close || [];
+    const quote = result.indicators?.quote?.[0] || {};
+    const closes: (number | null)[] = quote.close || [];
+    const opens: (number | null)[] = quote.open || [];
+    const highs: (number | null)[] = quote.high || [];
+    const lows: (number | null)[] = quote.low || [];
+    const volumes: (number | null)[] = quote.volume || [];
     if (timestamps.length === 0) return null;
 
     const points: ChartPoint[] = [];
@@ -112,6 +122,11 @@ async function tryYahooChart(symbol: string, range: string): Promise<{ points: C
       points.push({
         date: new Date(timestamps[i] * 1000).toISOString().slice(0, 10),
         price: c,
+        open: opens[i] ?? null,
+        high: highs[i] ?? null,
+        low: lows[i] ?? null,
+        close: c,
+        volume: volumes[i] ?? null,
       });
     }
     if (points.length < 2) return null;
