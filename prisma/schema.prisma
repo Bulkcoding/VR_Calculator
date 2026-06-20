@@ -43,17 +43,22 @@ model Holding {
 }
 
 model VrStrategy {
-  id          String   @id @default(cuid())
-  holdingId   String
-  userId      String
-  vValue      Float
-  bandPct     Float    @default(0.15)
-  divisorG    Int      @default(10)
-  contribution Float   @default(0)
-  pool        Float    @default(0)
-  currentQty  Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  holdingId    String
+  userId       String
+  vValue       Float
+  bandPreset   Int      @default(15)
+  bandPct      Float    @default(0.15)
+  divisorG     Int      @default(10)
+  contribution Float    @default(0)
+  withdrawal   Float    @default(0)
+  pool         Float    @default(0)
+  currentQty   Float
+  mode         String   @default("lump")
+  tradeUnit    Int      @default(1)
+  advanced     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   holding Holding @relation(fields: [holdingId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -67,14 +72,28 @@ model VrCycle {
   cycleNumber  Int
   startDate    DateTime @default(now())
   endDate      DateTime?
+  mode         String   @default("lump")
+
   vValue       Float
+  bandPreset   Int      @default(15)
   bandPct      Float
   divisorG     Int
-  contribution Float
-  pool         Float
-  currentQty   Float
-  minBand      Float
-  maxBand      Float
+  contribution Float    @default(0)
+  withdrawal   Float    @default(0)
+  tradeUnit    Int      @default(1)
+  advanced     Boolean  @default(false)
+
+  startPool    Float?
+  endPool      Float?
+  startEval    Float?
+  endEval      Float?
+  startQty     Float?
+  endQty       Float?
+  startPrice   Float?
+  endPrice     Float?
+  minBand      Float?
+  maxBand      Float?
+
   notes        String?
   createdAt    DateTime @default(now())
 

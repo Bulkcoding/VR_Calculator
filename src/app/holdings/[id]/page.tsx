@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { calculateVr, type VrParams, type VrResult } from "@/lib/vr";
+import { calculateVr, BAND_PRESETS, MODE_LABELS, type BandPreset, type VrMode, type VrParams, type VrResult } from "@/lib/vr";
 import DashboardShell from "@/components/DashboardShell";
 import StatCard from "@/components/StatCard";
 import RingProgress from "@/components/RingProgress";
@@ -24,26 +24,41 @@ interface VrCycleData {
   cycleNumber: number;
   startDate: string;
   endDate: string | null;
+  mode: string;
   vValue: number;
+  bandPreset: number;
   bandPct: number;
   divisorG: number;
   contribution: number;
-  pool: number;
-  currentQty: number;
-  minBand: number;
-  maxBand: number;
+  withdrawal: number;
+  tradeUnit: number;
+  advanced: boolean;
+  startPool: number | null;
+  endPool: number | null;
+  startEval: number | null;
+  endEval: number | null;
+  startQty: number | null;
+  endQty: number | null;
+  startPrice: number | null;
+  endPrice: number | null;
+  minBand: number | null;
+  maxBand: number | null;
   notes: string | null;
 }
 
 const currencySymbol = (c: string) => (c === "USD" ? "$" : "₩");
 
-const defaultParams: VrParams = {
-  vValue: 10000,
-  bandPct: 0.1,
-  divisorG: 21,
+const defaultParams: Omit<VrParams, "bandPct"> & { bandPreset: BandPreset } = {
+  vValue: 0,
+  bandPreset: 15,
+  divisorG: 10,
   contribution: 0,
-  pool: 2000,
+  withdrawal: 0,
+  pool: 0,
   currentQty: 0,
+  mode: "lump",
+  tradeUnit: 1,
+  advanced: false,
 };
 
 function HeroChart({ width = 240, height = 80, positive = true }: { width?: number; height?: number; positive?: boolean }) {
@@ -106,10 +121,7 @@ function ScheduleTable({ rows, type, symbol }: { rows: { qty: number; price: num
               </div>
               <div className="flex-1">
                 <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${isBuy ? "bg-green-500" : "bg-red-500"}`}
-                    style={{ width: `${Math.min(100, ((i + 1) / Math.max(rows.length, 1)) * 100)}%` }}
-                  />
+                  <div className={`h-full rounded-full ${isBuy ? "bg-green-500" : "bg-red-500"}`} style={{ width: `${Math.min(100, ((i + 1) / Math.max(rows.length, 1)) * 100)}%` }} />
                 </div>
               </div>
               <div className="text-right text-xs">
@@ -131,35 +143,59 @@ function ScheduleTable({ rows, type, symbol }: { rows: { qty: number; price: num
 
 function CycleRow({
   cycle,
+  unit,
   onComplete,
   onUpdate,
   onDelete,
 }: {
   cycle: VrCycleData;
+  unit: string;
   onComplete: (id: string) => void;
   onUpdate: (id: string, data: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [notes, setNotes] = useState(cycle.notes ?? "");
+  const [editingEnd, setEditingEnd] = useState(false);
+  const [endPrice, setEndPrice] = useState(cycle.endPrice ?? 0);
+  const [endQty, setEndQty] = useState(cycle.endQty ?? 0);
 
-  const saveNotes = async () => {
-    await onUpdate(cycle.id, { notes });
-    setEditing(false);
+  const saveNotes = async () => { await onUpdate(cycle.id, { notes }); setEditing(false); };
+  const saveEnd = async () => {
+    await onUpdate(cycle.id, { endPrice: Number(endPrice), endQty: Number(endQty) });
+    setEditingEnd(false);
   };
+
+  const fmt = (n: number | null) => (n === null || n === undefined ? "—" : n.toLocaleString());
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50/50">
       <td className="px-3 py-3 text-sm font-medium text-gray-900">{cycle.cycleNumber}</td>
       <td className="px-3 py-3 text-sm text-gray-600">{new Date(cycle.startDate).toLocaleDateString()}</td>
       <td className="px-3 py-3 text-sm text-gray-600">{cycle.endDate ? new Date(cycle.endDate).toLocaleDateString() : "-"}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{cycle.vValue.toLocaleString()}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{(cycle.bandPct * 100).toFixed(0)}%</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{cycle.divisorG}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{cycle.pool.toLocaleString()}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{cycle.currentQty}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{cycle.minBand.toLocaleString()}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{cycle.maxBand.toLocaleString()}</td>
+      <td className="px-3 py-3 text-sm">
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-700">{MODE_LABELS[(cycle.mode as VrMode) || "lump"]}</span>
+      </td>
+      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.startEval)}</td>
+      <td className="px-3 py-3 text-sm text-gray-900">
+        {editingEnd ? (
+          <div className="flex items-center gap-1">
+            <input type="number" value={endPrice} onChange={(e) => setEndPrice(Number(e.target.value))} className="w-16 px-1 py-0.5 border border-gray-200 rounded text-xs" />
+            <span className="text-xs text-gray-400">×</span>
+            <input type="number" value={endQty} onChange={(e) => setEndQty(Number(e.target.value))} className="w-14 px-1 py-0.5 border border-gray-200 rounded text-xs" />
+            <button onClick={saveEnd} className="text-xs text-blue-600">저장</button>
+            <button onClick={() => setEditingEnd(false)} className="text-xs text-gray-400">×</button>
+          </div>
+        ) : (
+          <span onClick={() => setEditingEnd(true)} className="cursor-pointer hover:text-blue-600">{fmt(cycle.endEval)}</span>
+        )}
+      </td>
+      <td className="px-3 py-3 text-sm font-semibold text-gray-900">{fmt(cycle.vValue)}</td>
+      <td className="px-3 py-3 text-sm text-gray-600">±{cycle.bandPreset}%</td>
+      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.minBand)}</td>
+      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.maxBand)}</td>
+      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.startPool)}</td>
+      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.endPool)}</td>
       <td className="px-3 py-3 text-sm">
         {cycle.endDate ? (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">완료</span>
@@ -173,12 +209,10 @@ function CycleRow({
             <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
               className="w-24 px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" autoFocus
               onKeyDown={(e) => { if (e.key === "Enter") saveNotes(); if (e.key === "Escape") setEditing(false); }} />
-            <button onClick={saveNotes} className="text-xs text-blue-600 hover:text-blue-800">저장</button>
+            <button onClick={saveNotes} className="text-xs text-blue-600">저장</button>
           </div>
         ) : (
-          <span onClick={() => setEditing(true)} className="cursor-pointer text-gray-500 hover:text-gray-900">
-            {cycle.notes || "—"}
-          </span>
+          <span onClick={() => setEditing(true)} className="cursor-pointer text-gray-500 hover:text-gray-900">{cycle.notes || "—"}</span>
         )}
       </td>
       <td className="px-3 py-3 text-sm">
@@ -196,7 +230,7 @@ function CycleRow({
 export default function VrEditorPage() {
   const { id } = useParams<{ id: string }>();
   const [holding, setHolding] = useState<HoldingDetail | null>(null);
-  const [params, setParams] = useState<VrParams>(defaultParams);
+  const [params, setParams] = useState<Omit<VrParams, "bandPct"> & { bandPreset: BandPreset }>(defaultParams);
   const [result, setResult] = useState<VrResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [cycles, setCycles] = useState<VrCycleData[]>([]);
@@ -213,7 +247,21 @@ export default function VrEditorPage() {
     const strategyRes = await fetch(`/api/vr-strategies/${id}`);
     if (strategyRes.ok) {
       const s = await strategyRes.json();
-      if (s) setParams(s);
+      if (s) {
+        const preset = (s.bandPreset === 10 || s.bandPreset === 15 || s.bandPreset === 20) ? s.bandPreset : 15;
+        setParams({
+          vValue: s.vValue ?? 0,
+          bandPreset: preset as BandPreset,
+          divisorG: s.divisorG ?? 10,
+          contribution: s.contribution ?? 0,
+          withdrawal: s.withdrawal ?? 0,
+          pool: s.pool ?? 0,
+          currentQty: s.currentQty ?? (h?.quantity ?? 0),
+          mode: (s.mode === "contribution" || s.mode === "withdrawal") ? s.mode : "lump",
+          tradeUnit: s.tradeUnit ?? 1,
+          advanced: Boolean(s.advanced),
+        });
+      }
     }
     const cyclesRes = await fetch(`/api/vr-cycles/${id}`);
     if (cyclesRes.ok) setCycles(await cyclesRes.json());
@@ -221,33 +269,42 @@ export default function VrEditorPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  useEffect(() => { setResult(calculateVr(params)); }, [params]);
+  useEffect(() => {
+    const bandPct = ({ 10: 0.1, 15: 0.15, 20: 0.2 } as const)[params.bandPreset];
+    setResult(calculateVr({ ...params, bandPct }));
+  }, [params]);
 
-  const updateParam = (key: keyof VrParams, value: string) => {
+  const updateParam = <K extends keyof typeof params>(key: K, value: typeof params[K]) => {
+    setParams((prev) => ({ ...prev, [key]: value }));
+  };
+  const updateNumber = (key: keyof typeof params, value: string) => {
     const num = parseFloat(value);
-    if (!isNaN(num)) setParams((prev) => ({ ...prev, [key]: num }));
+    if (!isNaN(num)) updateParam(key, num as any);
   };
 
   const save = async () => {
     setSaving(true);
+    const bandPct = ({ 10: 0.1, 15: 0.15, 20: 0.2 } as const)[params.bandPreset];
     await fetch(`/api/vr-strategies/${id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
+      body: JSON.stringify({ ...params, bandPct }),
     });
     setSaving(false);
   };
 
   const startCycle = async () => {
     setStartingCycle(true);
+    const bandPct = ({ 10: 0.1, 15: 0.15, 20: 0.2 } as const)[params.bandPreset];
     await fetch(`/api/vr-cycles/${id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
+      body: JSON.stringify({ ...params, bandPct, currentPrice: holding?.currentPrice ?? 0, cycleDays: 14 }),
     });
     setStartingCycle(false);
     const res = await fetch(`/api/vr-cycles/${id}`);
     if (res.ok) setCycles(await res.json());
+    fetchData();
   };
 
   const completeCycle = async (cycleId: string) => {
@@ -285,6 +342,7 @@ export default function VrEditorPage() {
   const positive = gainPct >= 0;
   const activeCycle = cycles.find((c) => !c.endDate);
   const rebalancePct = 78;
+  const modeBg: Record<VrMode, string> = { lump: "bg-blue-50 text-blue-700", contribution: "bg-green-50 text-green-700", withdrawal: "bg-orange-50 text-orange-700" };
 
   return (
     <DashboardShell
@@ -297,9 +355,7 @@ export default function VrEditorPage() {
       }
     >
       <div className="mb-2">
-        <Link href="/" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">
-          ← 포트폴리오로 돌아가기
-        </Link>
+        <Link href="/" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">← 포트폴리오로 돌아가기</Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
@@ -312,29 +368,18 @@ export default function VrEditorPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl font-bold text-gray-900">{holding?.name || "로딩중..."}</h1>
-                  {activeCycle && (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600">운용 중</span>
-                  )}
+                  {activeCycle && <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600">운용 중</span>}
                 </div>
                 <p className="text-xs text-gray-500">{holding?.ticker}</p>
               </div>
             </div>
-
             <div className="flex items-baseline gap-2 mb-3">
               <span className="text-3xl font-bold text-gray-900">{unit}{hasPrice ? holding!.currentPrice!.toLocaleString() : "—"}</span>
-              {hasPrice && (
-                <span className={`text-base font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
-                  {positive ? "+" : ""}{gainPct.toFixed(2)}%
-                </span>
-              )}
+              {hasPrice && <span className={`text-base font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>{positive ? "+" : ""}{gainPct.toFixed(2)}%</span>}
             </div>
             <p className="text-xs text-gray-500">오늘 {positive ? "+" : ""}1.82% · 미국 · 나스닥</p>
-
-            <div className="mt-4">
-              <HeroChart positive={positive} />
-            </div>
+            <div className="mt-4"><HeroChart positive={positive} /></div>
           </div>
-
           <div className="lg:w-72 lg:border-l lg:border-gray-100 lg:pl-6 space-y-3">
             {[
               { label: "보유수량", value: `${holding?.quantity || 0} 주` },
@@ -345,9 +390,7 @@ export default function VrEditorPage() {
             ].map((row) => (
               <div key={row.label} className="flex items-center justify-between py-1.5">
                 <span className="text-xs text-gray-500">{row.label}</span>
-                <span className={`text-sm font-semibold ${row.accent === "green" ? "text-green-600" : row.accent === "red" ? "text-red-500" : "text-gray-900"}`}>
-                  {row.value}
-                </span>
+                <span className={`text-sm font-semibold ${row.accent === "green" ? "text-green-600" : row.accent === "red" ? "text-red-500" : "text-gray-900"}`}>{row.value}</span>
               </div>
             ))}
           </div>
@@ -359,7 +402,7 @@ export default function VrEditorPage() {
         <StatCard label="평가손익" value={`+$${Math.abs(gainAmount).toFixed(2)}`} subtext="전일 대비 +$12.34" accent="green" changePositive />
         <StatCard label="수익률" value={`+${gainPct.toFixed(2)}%`} subtext="전일 대비 +2.11%" accent="green" changePositive />
         <StatCard label="보유수량" value={`${holding?.quantity || 0} 주`} subtext={`주문 가능 ${(holding?.quantity || 0)} 주`} />
-        <StatCard label="현재 Pool" value="$2,000.00" subtext="사용 가능" accent="blue" />
+        <StatCard label="현재 Pool" value={`$${params.pool.toLocaleString()}`} subtext="사용 가능 (75%까지 매수)" accent="blue" />
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
@@ -379,57 +422,104 @@ export default function VrEditorPage() {
           </div>
         </div>
 
+        <div className="mb-4 flex items-center gap-3 flex-wrap">
+          <span className="text-xs text-gray-500 font-semibold">계산 모드</span>
+          {(["lump", "contribution", "withdrawal"] as VrMode[]).map((m) => (
+            <button key={m} onClick={() => updateParam("mode", m)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                params.mode === m
+                  ? modeBg[m] + " border-current"
+                  : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+              }`}>
+              {MODE_LABELS[m]}
+            </button>
+          ))}
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-semibold">심화 계산식</span>
+            <button onClick={() => updateParam("advanced", !params.advanced)}
+              className={`relative w-9 h-5 rounded-full transition ${params.advanced ? "bg-blue-600" : "bg-gray-200"}`}>
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition ${params.advanced ? "translate-x-4" : ""}`} />
+            </button>
+            <span className="text-xs text-gray-400">V2 = 21 + pool/G + (E-V1)/2√10</span>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">기준값 (V)</label>
               <div className="relative">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input type="number" value={params.vValue} onChange={(e) => updateParam("vValue", e.target.value)} className={inputClass + " pl-6"} step="any" />
+                <input type="number" value={params.vValue} onChange={(e) => updateNumber("vValue", e.target.value)} className={inputClass + " pl-6"} step="any" />
               </div>
             </div>
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">최소밴드</label>
               <div className="relative">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input type="number" value={Math.round(result?.minBand ?? 0)} readOnly className={inputClass + " pl-6 bg-gray-50"} />
+                <input type="number" value={Math.round(result?.minBand ?? 0)} readOnly className={inputClass + " pl-6 bg-gray-50 cursor-not-allowed"} tabIndex={-1} />
               </div>
             </div>
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">최대밴드</label>
               <div className="relative">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input type="number" value={Math.round(result?.maxBand ?? 0)} readOnly className={inputClass + " pl-6 bg-gray-50"} />
+                <input type="number" value={Math.round(result?.maxBand ?? 0)} readOnly className={inputClass + " pl-6 bg-gray-50 cursor-not-allowed"} tabIndex={-1} />
               </div>
             </div>
+
             <div>
-              <label className="block text-[11px] text-gray-500 mb-1">밴드 (%)</label>
-              <div className="relative">
-                <input type="number" value={(params.bandPct * 100).toFixed(0)} onChange={(e) => updateParam("bandPct", (parseFloat(e.target.value) / 100).toString())} className={inputClass + " pr-7"} min="1" max="50" />
-                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+              <label className="block text-[11px] text-gray-500 mb-1">밴드 (±%)</label>
+              <div className="flex gap-1">
+                {BAND_PRESETS.map((p) => (
+                  <button key={p} onClick={() => updateParam("bandPreset", p)}
+                    className={`flex-1 px-2 py-2 rounded-lg text-xs font-semibold transition border ${
+                      params.bandPreset === p
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                    }`}>±{p}%</button>
+                ))}
               </div>
             </div>
+
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">분할 수 (G)</label>
-              <input type="number" value={params.divisorG} onChange={(e) => updateParam("divisorG", e.target.value)} className={inputClass} min="1" />
+              <input type="number" value={params.divisorG} onChange={(e) => updateNumber("divisorG", e.target.value)} className={inputClass} min="1" />
             </div>
             <div>
-              <label className="block text-[11px] text-gray-500 mb-1">적립금</label>
-              <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input type="number" value={params.contribution} onChange={(e) => updateParam("contribution", e.target.value)} className={inputClass + " pl-6"} step="any" />
-              </div>
+              <label className="block text-[11px] text-gray-500 mb-1">분할 단위 (주)</label>
+              <input type="number" value={params.tradeUnit} onChange={(e) => updateNumber("tradeUnit", e.target.value)} className={inputClass} min="1" />
             </div>
+
+            {params.mode === "contribution" && (
+              <div>
+                <label className="block text-[11px] text-gray-500 mb-1">적립금</label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                  <input type="number" value={params.contribution} onChange={(e) => updateNumber("contribution", e.target.value)} className={inputClass + " pl-6"} step="any" />
+                </div>
+              </div>
+            )}
+            {params.mode === "withdrawal" && (
+              <div>
+                <label className="block text-[11px] text-gray-500 mb-1">인출금</label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                  <input type="number" value={params.withdrawal} onChange={(e) => updateNumber("withdrawal", e.target.value)} className={inputClass + " pl-6"} step="any" />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">현재 Pool</label>
               <div className="relative">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input type="number" value={params.pool} onChange={(e) => updateParam("pool", e.target.value)} className={inputClass + " pl-6"} step="any" />
+                <input type="number" value={params.pool} onChange={(e) => updateNumber("pool", e.target.value)} className={inputClass + " pl-6"} step="any" />
               </div>
             </div>
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">보유개수</label>
-              <input type="number" value={params.currentQty} onChange={(e) => updateParam("currentQty", e.target.value)} className={inputClass} min="0" />
+              <input type="number" value={params.currentQty} onChange={(e) => updateNumber("currentQty", e.target.value)} className={inputClass} min="0" />
             </div>
             <div className="flex items-end">
               <button onClick={startCycle} disabled={startingCycle || !!activeCycle}
@@ -443,11 +533,15 @@ export default function VrEditorPage() {
             <h3 className="text-sm font-semibold text-gray-900 mb-3">요약</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500">최소밴드 (V - 밴드)</span>
+                <span className="text-gray-500">계산 모드</span>
+                <span className="font-semibold text-gray-900">{MODE_LABELS[params.mode]}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">최소밴드 (V - {params.bandPreset}%)</span>
                 <span className="font-semibold text-blue-600">${Math.round(result?.minBand ?? 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">최대밴드 (V + 밴드)</span>
+                <span className="text-gray-500">최대밴드 (V + {params.bandPreset}%)</span>
                 <span className="font-semibold text-red-500">${Math.round(result?.maxBand ?? 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
@@ -456,8 +550,17 @@ export default function VrEditorPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">1 구간 금액</span>
-                <span className="font-semibold text-gray-900">${(100).toFixed(2)}</span>
+                <span className="font-semibold text-gray-900">${(params.pool / Math.max(1, params.divisorG)).toFixed(2)}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">매수 한도 (75%)</span>
+                <span className="font-semibold text-orange-600">${result?.poolCap.toLocaleString() ?? 0}</span>
+              </div>
+              {params.advanced && (
+                <div className="pt-2 mt-2 border-t border-gray-200 text-[10px] text-gray-500 leading-relaxed">
+                  심화: V2 = 21 + pool/G + (E-V1)/2√10
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -470,22 +573,20 @@ export default function VrEditorPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-gray-900">현재 사이클</h3>
-          </div>
+          <div className="flex items-center justify-between mb-4"><h3 className="text-base font-semibold text-gray-900">현재 사이클</h3></div>
           <div className="flex items-center gap-6">
             <RingProgress value={rebalancePct} size={120} label="진행률" sublabel="이번 사이클" />
             <div className="flex-1 space-y-2.5 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500">모드</span><span className="font-semibold">{MODE_LABELS[params.mode]}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">V (기준값)</span><span className="font-semibold">${params.vValue.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">밴드</span><span className="font-semibold">±{params.bandPreset}%</span></div>
               <div className="flex justify-between"><span className="text-gray-500">G (분할 수)</span><span className="font-semibold">{params.divisorG}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">현재 Pool</span><span className="font-semibold">${params.pool.toLocaleString()}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">사이클 시작일</span><span className="font-semibold">2026.06.19</span></div>
               <div className="flex justify-between"><span className="text-gray-500">다음 리밸런싱</span><span className="font-semibold">2026.06.21</span></div>
             </div>
           </div>
-          <button className="w-full mt-4 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition">
-            사이클 상세 보기 →
-          </button>
+          <button className="w-full mt-4 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition">사이클 상세 보기 →</button>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
@@ -509,11 +610,10 @@ export default function VrEditorPage() {
           {cycles.length > 0 && (
             <button onClick={() => {
               const csv = [
-                ["#","시작일","종료일","V","밴드%","G","Pool","수량","최소밴드","최대밴드","비고"].join(","),
+                ["#","시작일","종료일","모드","시작평가금","마지막평가금","V","밴드","시작pool","마지막pool","비고"].join(","),
                 ...cycles.map(c => [
-                  c.cycleNumber, c.startDate.slice(0,10), c.endDate?.slice(0,10) || "진행중",
-                  c.vValue, (c.bandPct*100).toFixed(0), c.divisorG, c.pool, c.currentQty,
-                  c.minBand, c.maxBand, `"${c.notes || ""}"`
+                  c.cycleNumber, c.startDate.slice(0,10), c.endDate?.slice(0,10) || "진행중", MODE_LABELS[(c.mode as VrMode) || "lump"],
+                  c.startEval ?? "", c.endEval ?? "", c.vValue, `±${c.bandPreset}%`, c.startPool ?? "", c.endPool ?? "", `"${c.notes || ""}"`
                 ].join(","))
               ].join("\n");
               const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -535,13 +635,15 @@ export default function VrEditorPage() {
                   <th className="px-3 py-2">#</th>
                   <th className="px-3 py-2">시작일</th>
                   <th className="px-3 py-2">종료일</th>
+                  <th className="px-3 py-2">모드</th>
+                  <th className="px-3 py-2">시작평가금</th>
+                  <th className="px-3 py-2">마지막평가금</th>
                   <th className="px-3 py-2">V</th>
                   <th className="px-3 py-2">밴드</th>
-                  <th className="px-3 py-2">G</th>
-                  <th className="px-3 py-2">Pool</th>
-                  <th className="px-3 py-2">수량</th>
                   <th className="px-3 py-2">최소밴드</th>
                   <th className="px-3 py-2">최대밴드</th>
+                  <th className="px-3 py-2">시작 pool</th>
+                  <th className="px-3 py-2">마지막 pool</th>
                   <th className="px-3 py-2">상태</th>
                   <th className="px-3 py-2">비고</th>
                   <th className="px-3 py-2"></th>
@@ -549,7 +651,7 @@ export default function VrEditorPage() {
               </thead>
               <tbody>
                 {cycles.map((c) => (
-                  <CycleRow key={c.id} cycle={c} onComplete={completeCycle} onUpdate={updateCycle} onDelete={deleteCycle} />
+                  <CycleRow key={c.id} cycle={c} unit={unit} onComplete={completeCycle} onUpdate={updateCycle} onDelete={deleteCycle} />
                 ))}
               </tbody>
             </table>
