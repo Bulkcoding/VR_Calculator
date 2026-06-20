@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/SessionProvider";
 
@@ -8,13 +8,8 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "VR 리밸런싱 웹앱",
+  title: "VR 리밸런싱",
   description: "주식 밸류 리밸런싱(VR) 계산·정리 웹앱",
 };
 
@@ -26,9 +21,9 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-gray-50">
+      <body className="min-h-full flex flex-col bg-[#f5f7fb] text-gray-900">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
