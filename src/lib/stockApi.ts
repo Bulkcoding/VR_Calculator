@@ -58,7 +58,7 @@ async function tryYahooCurrent(symbol: string): Promise<number | null> {
     const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d`, {
       headers: { "User-Agent": "Mozilla/5.0" },
       signal: AbortSignal.timeout(4000),
-      next: { revalidate: 60 },
+      cache: "no-store",
     });
     const data = await res.json();
     const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
@@ -95,7 +95,7 @@ async function tryYahooChart(symbol: string, range: string): Promise<{ points: C
       {
         headers: { "User-Agent": "Mozilla/5.0" },
         signal: AbortSignal.timeout(6000),
-        next: { revalidate: 300 },
+        cache: "no-store",
       }
     );
     const data = await res.json();
