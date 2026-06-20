@@ -72,7 +72,7 @@ export function calculateVr(
     buyTable.push({
       step: i + 1,
       unit,
-      qty: buyQty,
+      qty: Number(buyQty.toFixed(2)),
       price: Number(price.toFixed(2)),
       pool: Number(buyPool.toFixed(2)),
       cumAmount: Number(cumAmount.toFixed(2)),
@@ -87,6 +87,7 @@ export function calculateVr(
     const unit = Math.max(1, Math.floor(sellUnits[i] ?? 1));
     if (sellQty <= 0) break;
     const price = maxBand / sellQty;
+    if (price < 1) break;
     const proceeds = price * unit;
     sellQty -= unit;
     if (sellQty < 0) sellQty = 0;
@@ -95,7 +96,7 @@ export function calculateVr(
     sellTable.push({
       step: i + 1,
       unit,
-      qty: sellQty,
+      qty: Number(sellQty.toFixed(2)),
       price: Number(price.toFixed(2)),
       pool: Number(sellPool.toFixed(2)),
       cumAmount: Number(sCumAmount.toFixed(2)),
