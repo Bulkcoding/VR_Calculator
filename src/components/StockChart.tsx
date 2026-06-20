@@ -153,7 +153,6 @@ export default function StockChart({
   const hoverPoint = hoverIndex !== null && data ? data.points[hoverIndex] : null;
   const hoverX = hoverIndex !== null ? stepX * hoverIndex : 0;
   const hoverY = hoverPoint && path ? priceToY(hoverPoint.price, path.min, path.max, height, pad) : 0;
-  const tooltipOnRight = hoverIndex !== null && data ? hoverIndex < data.points.length / 2 : true;
 
   return (
     <div className="w-full select-none">
@@ -281,13 +280,10 @@ export default function StockChart({
           </div>
         )}
 
-        {/* OHLC 툴팁 */}
+        {/* OHLC 툴팁 — 우상단 고정 */}
         {hoverPoint && path && (
           <div
-            className={`absolute z-20 pointer-events-none bg-white/95 border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[160px] ${
-              tooltipOnRight ? "left-2" : "right-2"
-            }`}
-            style={{ top: 4 }}
+            className="absolute z-20 top-1 right-1 pointer-events-none bg-white/95 border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-[11px] min-w-[160px]"
           >
             <div className="font-semibold text-gray-900 mb-1.5 pb-1 border-b border-gray-100">
               {hoverPoint.date}
