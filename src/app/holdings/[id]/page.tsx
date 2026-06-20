@@ -335,8 +335,12 @@ export default function VrEditorPage() {
   const inputClass = "w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
   const unit = holding ? currencySymbol(holding.currency) : "₩";
   const hasPrice = holding?.currentPrice !== null && holding?.currentPrice !== undefined;
-  const gainPct = hasPrice ? ((holding!.currentPrice! - holding!.avgPrice) / holding!.avgPrice) * 100 : 0;
-  const gainAmount = hasPrice ? (holding!.currentPrice! - holding!.avgPrice) * holding!.quantity : 0;
+  const gainPct = hasPrice && holding
+    ? ((holding.currentPrice! - holding.avgPrice) / holding.avgPrice) * 100
+    : 0;
+  const gainAmount = hasPrice && holding
+    ? (holding.currentPrice! - holding.avgPrice) * holding.quantity
+    : 0;
   const positive = gainPct >= 0;
   const activeCycle = cycles.find((c) => !c.endDate);
   const rebalancePct = 78;
@@ -372,25 +376,29 @@ export default function VrEditorPage() {
               </div>
             </div>
             <div className="flex items-baseline gap-2 mb-3">
-              <span className="text-3xl font-bold text-gray-900">{unit}{hasPrice ? holding!.currentPrice!.toLocaleString() : "—"}</span>
+              <span className="text-3xl font-bold text-gray-900">{unit}{hasPrice ? holding?.currentPrice?.toLocaleString() : "—"}</span>
               {hasPrice && <span className={`text-base font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>{positive ? "+" : ""}{gainPct.toFixed(2)}%</span>}
             </div>
             <p className="text-xs text-gray-500">오늘 {positive ? "+" : ""}1.82% · 미국 · 나스닥</p>
             <div className="mt-4">
-              <StockChart
-                holdingId={holding!.id}
-                symbol={holding!.ticker}
-                positive={positive}
-                currencySymbol={unit}
-                height={140}
-              />
+              {holding ? (
+                <StockChart
+                  holdingId={holding.id}
+                  symbol={holding.ticker}
+                  positive={positive}
+                  currencySymbol={unit}
+                  height={140}
+                />
+              ) : (
+                <div className="h-[140px] flex items-center justify-center text-xs text-gray-400">차트 로딩중...</div>
+              )}
             </div>
           </div>
           <div className="lg:w-72 lg:border-l lg:border-gray-100 lg:pl-6 space-y-3">
             {[
               { label: "보유수량", value: `${holding?.quantity || 0} 주` },
-              { label: "평균단가", value: `${unit}${holding?.avgPrice.toLocaleString() || 0}` },
-              { label: "평가금액", value: `${unit}${hasPrice ? (holding!.currentPrice! * holding!.quantity).toLocaleString() : "—"}` },
+              { label: "평균단가", value: `${unit}${holding?.avgPrice?.toLocaleString() || 0}` },
+              { label: "평가금액", value: `${unit}${hasPrice ? (holding?.currentPrice! * (holding?.quantity || 0)).toLocaleString() : "—"}` },
               { label: "평가손익", value: `${positive ? "+" : ""}${unit}${Math.abs(gainAmount).toLocaleString()}`, accent: positive ? "green" : "red" },
               { label: "수익률", value: `${positive ? "+" : ""}${gainPct.toFixed(2)}%`, accent: positive ? "green" : "red" },
             ].map((row) => (
@@ -404,7 +412,7 @@ export default function VrEditorPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-        <StatCard label="평가금액" value={hasPrice ? `$${(holding!.currentPrice! * holding!.quantity).toFixed(2)}` : "—"} subtext="전일 대비 +2.35%" />
+        <StatCard label="평가금액" value={hasPrice ? `$${(holding?.currentPrice! * (holding?.quantity || 0)).toFixed(2)}` : "—"} subtext="전일 대비 +2.35%" />
         <StatCard label="평가손익" value={`+$${Math.abs(gainAmount).toFixed(2)}`} subtext="전일 대비 +$12.34" accent="green" changePositive />
         <StatCard label="수익률" value={`+${gainPct.toFixed(2)}%`} subtext="전일 대비 +2.11%" accent="green" changePositive />
         <StatCard label="보유수량" value={`${holding?.quantity || 0} 주`} subtext={`주문 가능 ${(holding?.quantity || 0)} 주`} />
