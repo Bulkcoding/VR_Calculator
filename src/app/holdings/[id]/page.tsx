@@ -34,6 +34,68 @@ interface VrCycleData {
 
 const currencySymbol = (c: string) => (c === "USD" ? "$" : "₩");
 
+function CycleRow({
+  cycle,
+  onComplete,
+  onUpdate,
+  onDelete,
+}: {
+  cycle: VrCycleData;
+  onComplete: (id: string) => void;
+  onUpdate: (id: string, data: Record<string, unknown>) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [notes, setNotes] = useState(cycle.notes ?? "");
+
+  const input = "w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500";
+
+  const saveNotes = async () => {
+    await onUpdate(cycle.id, { notes });
+    setEditing(false);
+  };
+
+  return (
+    <tr className="border-b border-gray-100 hover:bg-gray-50">
+      <td className="px-2 py-2 font-medium">{cycle.cycleNumber}</td>
+      <td className="px-2 py-2 text-xs">{new Date(cycle.startDate).toLocaleDateString()}</td>
+      <td className="px-2 py-2 text-xs">{cycle.endDate ? new Date(cycle.endDate).toLocaleDateString() : "진행중"}</td>
+      <td className="px-2 py-2">{cycle.vValue.toLocaleString()}</td>
+      <td className="px-2 py-2">{(cycle.bandPct * 100).toFixed(0)}%</td>
+      <td className="px-2 py-2">{cycle.divisorG}</td>
+      <td className="px-2 py-2">{cycle.pool.toLocaleString()}</td>
+      <td className="px-2 py-2">{cycle.currentQty}</td>
+      <td className="px-2 py-2">{cycle.minBand.toLocaleString()}</td>
+      <td className="px-2 py-2">{cycle.maxBand.toLocaleString()}</td>
+      <td className="px-2 py-2 max-w-[120px]">
+        {editing ? (
+          <div className="flex gap-1">
+            <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
+              className={input} autoFocus onKeyDown={(e) => { if (e.key === "Enter") saveNotes(); if (e.key === "Escape") setEditing(false); }} />
+            <button onClick={saveNotes} className="text-xs text-blue-600 hover:text-blue-800">저장</button>
+            <button onClick={() => setEditing(false)} className="text-xs text-gray-400 hover:text-gray-600">취소</button>
+          </div>
+        ) : (
+          <span onClick={() => setEditing(true)}
+            className={`cursor-pointer block truncate ${cycle.notes ? "text-gray-700" : "text-gray-300"}`}>
+            {cycle.notes || "클릭하여 입력"}
+          </span>
+        )}
+      </td>
+      <td className="px-2 py-2">
+        <div className="flex gap-2">
+          {!cycle.endDate && (
+            <button onClick={() => onComplete(cycle.id)}
+              className="text-xs text-blue-600 hover:text-blue-800">완료</button>
+          )}
+          <button onClick={() => onDelete(cycle.id)}
+            className="text-xs text-red-400 hover:text-red-600">삭제</button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 const defaultParams: VrParams = {
   vValue: 10000,
   bandPct: 0.15,
@@ -105,6 +167,25 @@ export default function VrEditorPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ endDate: new Date().toISOString() }),
+    });
+    const res = await fetch(`/api/vr-cycles/${id}`);
+    if (res.ok) setCycles(await res.json());
+  };
+
+  const updateCycle = async (cycleId: string, data: Record<string, unknown>) => {
+    await fetch(`/api/vr-cycles/${id}?cycleId=${cycleId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const res = await fetch(`/api/vr-cycles/${id}`);
+    if (res.ok) setCycles(await res.json());
+  };
+
+  const deleteCycle = async (cycleId: string) => {
+    if (!confirm("정말 이 사이클을 삭제하시겠습니까?")) return;
+    await fetch(`/api/vr-cycles/${id}?cycleId=${cycleId}`, {
+      method: "DELETE",
     });
     const res = await fetch(`/api/vr-cycles/${id}`);
     if (res.ok) setCycles(await res.json());
@@ -243,25 +324,13 @@ export default function VrEditorPage() {
               </thead>
               <tbody>
                 {cycles.map((c) => (
-                  <tr key={c.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-2 py-2 font-medium">{c.cycleNumber}</td>
-                    <td className="px-2 py-2 text-xs">{new Date(c.startDate).toLocaleDateString()}</td>
-                    <td className="px-2 py-2 text-xs">{c.endDate ? new Date(c.endDate).toLocaleDateString() : "진행중"}</td>
-                    <td className="px-2 py-2">{c.vValue.toLocaleString()}</td>
-                    <td className="px-2 py-2">{(c.bandPct * 100).toFixed(0)}%</td>
-                    <td className="px-2 py-2">{c.divisorG}</td>
-                    <td className="px-2 py-2">{c.pool.toLocaleString()}</td>
-                    <td className="px-2 py-2">{c.currentQty}</td>
-                    <td className="px-2 py-2">{c.minBand.toLocaleString()}</td>
-                    <td className="px-2 py-2">{c.maxBand.toLocaleString()}</td>
-                    <td className="px-2 py-2 text-xs text-gray-400 max-w-[100px] truncate">{c.notes || ""}</td>
-                    <td className="px-2 py-2">
-                      {!c.endDate && (
-                        <button onClick={() => completeCycle(c.id)}
-                          className="text-xs text-blue-600 hover:text-blue-800">완료</button>
-                      )}
-                    </td>
-                  </tr>
+                  <CycleRow
+                    key={c.id}
+                    cycle={c}
+                    onComplete={completeCycle}
+                    onUpdate={updateCycle}
+                    onDelete={deleteCycle}
+                  />
                 ))}
               </tbody>
             </table>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { isDisposableEmail, COMMON_PROVIDERS_AUTO_ALLOW } from "@/lib/disposableEmail";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -8,6 +9,18 @@ export async function POST(req: NextRequest) {
 
   if (!email || !password || password.length < 4) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+
+  const domain = email.split("@").pop()?.toLowerCase();
+  if (!domain) {
+    return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+  }
+
+  // Allow common providers without checking the disposable list
+  if (!COMMON_PROVIDERS_AUTO_ALLOW.has(domain) && isDisposableEmail(email)) {
+    return NextResponse.json({
+      error: "일회용 이메일은 사용할 수 없습니다. Gmail, 네이버, 다음 등 정상적인 이메일을 사용해주세요.",
+    }, { status: 400 });
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
