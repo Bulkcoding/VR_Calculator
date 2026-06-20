@@ -57,7 +57,6 @@ const defaultParams: Omit<VrParams, "bandPct"> & { bandPreset: BandPreset } = {
   pool: 0,
   currentQty: 0,
   mode: "lump",
-  tradeUnit: 1,
   advanced: false,
 };
 
@@ -93,8 +92,29 @@ function HeroChart({ width = 240, height = 80, positive = true }: { width?: numb
   );
 }
 
-function ScheduleTable({ rows, type, symbol }: { rows: { qty: number; price: number; pool: number }[]; type: "buy" | "sell"; symbol: string }) {
+function ScheduleTable({
+  rows, type, symbol, onUnitChange, onBulkApply, onReset,
+}: {
+  rows: { step: number; unit: number; qty: number; price: number; pool: number }[];
+  type: "buy" | "sell";
+  symbol: string;
+  onUnitChange: (step: number, unit: number) => void;
+  onBulkApply: (unit: number) => void;
+  onReset: () => void;
+}) {
   const isBuy = type === "buy";
+  const [bulkUnit, setBulkUnit] = useState(1);
+  const [showAll, setShowAll] = useState(false);
+
+  const accentBg = isBuy ? "bg-green-50/50" : "bg-red-50/50";
+  const accentText = isBuy ? "text-green-600" : "text-red-500";
+  const accentBar = isBuy ? "bg-green-500" : "bg-red-500";
+  const accentBtn = isBuy ? "bg-green-600 hover:bg-green-700" : "bg-red-500 hover:bg-red-600";
+
+  const applyBulk = () => onBulkApply(Math.max(1, Math.floor(bulkUnit)));
+
+  const displayRows = showAll ? rows : rows.slice(0, 8);
+
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -107,21 +127,58 @@ function ScheduleTable({ rows, type, symbol }: { rows: { qty: number; price: num
           자동 설정
         </span>
       </div>
-      <div className="space-y-2">
+
+      <div className={`flex items-center gap-2 mb-3 p-2.5 rounded-lg ${accentBg}`}>
+        <span className="text-xs text-gray-600 font-semibold whitespace-nowrap">⚡ 일괄 등록</span>
+        <input
+          type="number"
+          min="1"
+          value={bulkUnit}
+          onChange={(e) => setBulkUnit(Math.max(1, parseInt(e.target.value) || 1))}
+          onKeyDown={(e) => { if (e.key === "Enter") applyBulk(); }}
+          className="w-14 px-2 py-1 border border-gray-200 rounded text-xs text-center bg-white"
+        />
+        <span className="text-xs text-gray-500">주</span>
+        <button
+          onClick={applyBulk}
+          className={`px-2.5 py-1 rounded text-xs font-semibold text-white transition ${accentBtn}`}
+        >
+          전체 적용
+        </button>
+        <button
+          onClick={() => { setBulkUnit(1); onReset(); }}
+          className="px-2.5 py-1 rounded text-xs font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition"
+        >
+          초기화
+        </button>
+        <span className="text-[10px] text-gray-400 ml-auto whitespace-nowrap">모든 차수 동일 적용</span>
+      </div>
+
+      <div className="space-y-1">
         {rows.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">{isBuy ? "Pool 부족" : "매도 가능 수량 없음"}</p>
+          <p className="text-sm text-gray-400 text-center py-8">{isBuy ? "Pool 부족 (단위를 줄여보세요)" : "매도 가능 수량 없음"}</p>
         ) : (
-          rows.slice(0, 5).map((row, i) => (
-            <div key={i} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-              <div className={`text-xs font-semibold w-12 ${isBuy ? "text-green-600" : "text-red-500"}`}>
-                {i + 1}차 {isBuy ? "매수" : "매도"}
+          displayRows.map((row) => (
+            <div key={row.step} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
+              <div className={`text-xs font-semibold w-14 ${accentText}`}>
+                {row.step}차 {isBuy ? "매수" : "매도"}
               </div>
-              <div className={`text-sm font-bold w-20 ${isBuy ? "text-green-600" : "text-red-500"}`}>
+              <div className="flex items-center gap-0.5 shrink-0">
+                <input
+                  type="number"
+                  min="1"
+                  value={row.unit}
+                  onChange={(e) => onUnitChange(row.step, Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-12 px-1 py-1 border border-gray-200 rounded text-xs text-center bg-white"
+                />
+                <span className="text-[10px] text-gray-400">주</span>
+              </div>
+              <div className={`text-sm font-bold w-20 ${accentText}`}>
                 {symbol}{row.price.toLocaleString()}
               </div>
               <div className="flex-1">
                 <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${isBuy ? "bg-green-500" : "bg-red-500"}`} style={{ width: `${Math.min(100, ((i + 1) / Math.max(rows.length, 1)) * 100)}%` }} />
+                  <div className={`h-full rounded-full ${accentBar}`} style={{ width: `${Math.min(100, (row.step / Math.max(rows.length, 1)) * 100)}%` }} />
                 </div>
               </div>
               <div className="text-right text-xs">
@@ -132,9 +189,12 @@ function ScheduleTable({ rows, type, symbol }: { rows: { qty: number; price: num
           ))
         )}
       </div>
-      {rows.length > 0 && (
-        <button className={`w-full mt-4 text-sm font-semibold ${isBuy ? "text-blue-600" : "text-red-500"}`}>
-          전체 {isBuy ? "매수" : "매도"} 구간 보기 →
+      {rows.length > 8 && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className={`w-full mt-3 text-xs font-semibold ${accentText}`}
+        >
+          {showAll ? "접기 ∧" : `전체 ${rows.length}개 구간 보기 ∨`}
         </button>
       )}
     </div>
@@ -235,6 +295,8 @@ export default function VrEditorPage() {
   const [saving, setSaving] = useState(false);
   const [cycles, setCycles] = useState<VrCycleData[]>([]);
   const [startingCycle, setStartingCycle] = useState(false);
+  const [buyUnits, setBuyUnits] = useState<number[]>(() => Array(30).fill(1));
+  const [sellUnits, setSellUnits] = useState<number[]>(() => Array(30).fill(1));
 
   const fetchData = useCallback(async () => {
     const res = await fetch("/api/holdings");
@@ -258,7 +320,6 @@ export default function VrEditorPage() {
           pool: s.pool ?? 0,
           currentQty: s.currentQty ?? (h?.quantity ?? 0),
           mode: (s.mode === "contribution" || s.mode === "withdrawal") ? s.mode : "lump",
-          tradeUnit: s.tradeUnit ?? 1,
           advanced: Boolean(s.advanced),
         });
       }
@@ -271,8 +332,8 @@ export default function VrEditorPage() {
 
   useEffect(() => {
     const bandPct = ({ 10: 0.1, 15: 0.15, 20: 0.2 } as const)[params.bandPreset];
-    setResult(calculateVr({ ...params, bandPct }));
-  }, [params]);
+    setResult(calculateVr({ ...params, bandPct }, { buyUnits, sellUnits }));
+  }, [params, buyUnits, sellUnits]);
 
   const updateParam = <K extends keyof typeof params>(key: K, value: typeof params[K]) => {
     setParams((prev) => ({ ...prev, [key]: value }));
@@ -486,10 +547,6 @@ export default function VrEditorPage() {
               <label className="block text-[11px] text-gray-500 mb-1">분할 수 (G)</label>
               <input type="number" value={params.divisorG} onChange={(e) => updateNumber("divisorG", e.target.value)} className={inputClass} min="1" />
             </div>
-            <div>
-              <label className="block text-[11px] text-gray-500 mb-1">분할 단위 (주)</label>
-              <input type="number" value={params.tradeUnit} onChange={(e) => updateNumber("tradeUnit", e.target.value)} className={inputClass} min="1" />
-            </div>
 
             {params.mode === "contribution" && (
               <div>
@@ -567,8 +624,30 @@ export default function VrEditorPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <ScheduleTable rows={result?.buyTable || []} type="buy" symbol="$" />
-        <ScheduleTable rows={result?.sellTable || []} type="sell" symbol="$" />
+        <ScheduleTable
+          rows={result?.buyTable || []}
+          type="buy"
+          symbol="$"
+          onUnitChange={(step, unit) => {
+            const next = [...buyUnits];
+            next[step - 1] = unit;
+            setBuyUnits(next);
+          }}
+          onBulkApply={(unit) => setBuyUnits(Array(30).fill(unit))}
+          onReset={() => setBuyUnits(Array(30).fill(1))}
+        />
+        <ScheduleTable
+          rows={result?.sellTable || []}
+          type="sell"
+          symbol="$"
+          onUnitChange={(step, unit) => {
+            const next = [...sellUnits];
+            next[step - 1] = unit;
+            setSellUnits(next);
+          }}
+          onBulkApply={(unit) => setSellUnits(Array(30).fill(unit))}
+          onReset={() => setSellUnits(Array(30).fill(1))}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">

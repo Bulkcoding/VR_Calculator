@@ -75,7 +75,7 @@ export async function POST(
 
   const result = calculateVr({
     vValue, bandPreset, bandPct, divisorG, contribution, withdrawal,
-    pool: startPool, currentQty: startQty, mode, tradeUnit, advanced,
+    pool: startPool, currentQty: startQty, mode, advanced,
   });
 
   const cycle = await prisma.vrCycle.create({

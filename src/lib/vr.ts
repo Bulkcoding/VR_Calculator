@@ -11,15 +11,15 @@ export interface VrParams {
   pool: number;
   currentQty: number;
   mode: VrMode;
-  tradeUnit: number;
   advanced: boolean;
 }
 
 export interface PriceRow {
+  step: number;
+  unit: number;
   qty: number;
   price: number;
   pool: number;
-  cumQty: number;
   cumAmount: number;
 }
 
@@ -43,48 +43,63 @@ export const PRESET_TO_PCT: Record<BandPreset, number> = { 10: 0.1, 15: 0.15, 20
 
 export const BAND_PRESETS: BandPreset[] = [10, 15, 20];
 
-export function calculateVr(params: VrParams): VrResult {
-  const {
-    vValue, bandPct, divisorG, currentQty, pool, tradeUnit,
-  } = params;
+export const MAX_SCHEDULE_ROWS = 30;
+
+export function calculateVr(
+  params: VrParams,
+  options: { buyUnits?: number[]; sellUnits?: number[]; maxRows?: number } = {}
+): VrResult {
+  const { vValue, bandPct, pool, currentQty } = params;
+  const { buyUnits = [], sellUnits = [], maxRows = MAX_SCHEDULE_ROWS } = options;
 
   const minBand = vValue * (1 - bandPct);
   const maxBand = vValue * (1 + bandPct);
-
-  const unit = Math.max(1, Math.floor(tradeUnit || 1));
   const poolCap = pool * 0.75;
 
   const buyTable: PriceRow[] = [];
-  const sellTable: PriceRow[] = [];
-
   let buyPool = pool;
   let buyQty = currentQty;
-  let cumQty = 0;
   let cumAmount = 0;
-  for (let i = 0; i < 30; i++) {
-    const unitPrice = minBand / buyQty;
-    const cost = unitPrice * unit;
+  for (let i = 0; i < maxRows; i++) {
+    const unit = Math.max(1, Math.floor(buyUnits[i] ?? 1));
+    if (buyQty <= 0) break;
+    const price = minBand / buyQty;
+    const cost = price * unit;
     if (cost > buyPool || cost > poolCap) break;
     buyQty += unit;
     buyPool -= cost;
-    cumQty += unit;
     cumAmount += cost;
-    buyTable.push({ qty: buyQty, price: Number(unitPrice.toFixed(2)), pool: Number(buyPool.toFixed(2)), cumQty, cumAmount: Number(cumAmount.toFixed(2)) });
+    buyTable.push({
+      step: i + 1,
+      unit,
+      qty: buyQty,
+      price: Number(price.toFixed(2)),
+      pool: Number(buyPool.toFixed(2)),
+      cumAmount: Number(cumAmount.toFixed(2)),
+    });
   }
 
+  const sellTable: PriceRow[] = [];
   let sellPool = pool;
   let sellQty = currentQty;
-  let sCumQty = 0;
   let sCumAmount = 0;
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < maxRows; i++) {
+    const unit = Math.max(1, Math.floor(sellUnits[i] ?? 1));
     if (sellQty <= 0) break;
-    const unitPrice = maxBand / sellQty;
-    const proceeds = unitPrice * unit;
+    const price = maxBand / sellQty;
+    const proceeds = price * unit;
     sellQty -= unit;
+    if (sellQty < 0) sellQty = 0;
     sellPool += proceeds;
-    sCumQty += unit;
     sCumAmount += proceeds;
-    sellTable.push({ qty: Math.max(0, sellQty), price: Number(unitPrice.toFixed(2)), pool: Number(sellPool.toFixed(2)), cumQty: sCumQty, cumAmount: Number(sCumAmount.toFixed(2)) });
+    sellTable.push({
+      step: i + 1,
+      unit,
+      qty: sellQty,
+      price: Number(price.toFixed(2)),
+      pool: Number(sellPool.toFixed(2)),
+      cumAmount: Number(sCumAmount.toFixed(2)),
+    });
   }
 
   return {
