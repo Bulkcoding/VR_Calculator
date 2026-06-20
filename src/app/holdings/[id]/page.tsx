@@ -137,11 +137,12 @@ function ScheduleTable({
                   value={row.unit}
                   onChange={(e) => onUnitChange(row.step, Math.max(1, parseInt(e.target.value) || 1))}
                   className="w-14 px-2 py-1 border border-gray-200 rounded text-xs text-center bg-white"
+                  title="매도/매수 단위 (주)"
                 />
                 <span className="text-[10px] text-gray-400">주</span>
               </div>
-              <div className={`text-sm font-bold w-20 ${accentText}`}>
-                {symbol}{row.price.toLocaleString()}
+              <div className={`text-sm font-bold w-24 ${accentText}`} title="자동 계산된 1주 단가 (maxBand / 매도전수량)">
+                <span className="text-[10px] text-gray-400 font-normal mr-0.5">@</span>{symbol}{row.price.toLocaleString()}
               </div>
               <div className="flex-1">
                 <div className="h-1 bg-gray-100 rounded-full overflow-hidden">

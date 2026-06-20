@@ -88,6 +88,7 @@ export function calculateVr(
     if (sellQty <= 0) break;
     const price = maxBand / sellQty;
     if (price < 1) break;
+    if (sellQty - unit < 1) break;
     const proceeds = price * unit;
     sellQty -= unit;
     if (sellQty < 0) sellQty = 0;
