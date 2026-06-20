@@ -8,6 +8,7 @@ import DashboardShell from "@/components/DashboardShell";
 import StatCard from "@/components/StatCard";
 import RingProgress from "@/components/RingProgress";
 import ActivityItem from "@/components/ActivityItem";
+import StockChart from "@/components/StockChart";
 
 interface HoldingDetail {
   id: string;
@@ -59,38 +60,6 @@ const defaultParams: Omit<VrParams, "bandPct"> & { bandPreset: BandPreset } = {
   mode: "lump",
   advanced: false,
 };
-
-function HeroChart({ width = 240, height = 80, positive = true }: { width?: number; height?: number; positive?: boolean }) {
-  const points: number[] = [];
-  let v = 30;
-  for (let i = 0; i < 30; i++) {
-    v += ((i * 13) % 5) - 2 + (positive ? 1.2 : -1.2);
-    points.push(Math.max(5, Math.min(height - 5, v)));
-  }
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const range = max - min || 1;
-  const stepX = width / (points.length - 1);
-  const path = points
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${(i * stepX).toFixed(2)} ${(height - ((p - min) / range) * (height - 10) - 5).toFixed(2)}`)
-    .join(" ");
-  const fillPath = `${path} L ${width} ${height} L 0 ${height} Z`;
-  const color = positive ? "#10b981" : "#ef4444";
-  const id = `hero-${Math.random().toString(36).slice(2, 8)}`;
-
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={fillPath} fill={`url(#${id})`} />
-      <path d={path} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 function ScheduleTable({
   rows, type, symbol, onUnitChange,
@@ -407,7 +376,15 @@ export default function VrEditorPage() {
               {hasPrice && <span className={`text-base font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>{positive ? "+" : ""}{gainPct.toFixed(2)}%</span>}
             </div>
             <p className="text-xs text-gray-500">오늘 {positive ? "+" : ""}1.82% · 미국 · 나스닥</p>
-            <div className="mt-4"><HeroChart positive={positive} /></div>
+            <div className="mt-4">
+              <StockChart
+                holdingId={holding!.id}
+                symbol={holding!.ticker}
+                positive={positive}
+                currencySymbol={unit}
+                height={140}
+              />
+            </div>
           </div>
           <div className="lg:w-72 lg:border-l lg:border-gray-100 lg:pl-6 space-y-3">
             {[
