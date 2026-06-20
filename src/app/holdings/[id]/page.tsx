@@ -93,25 +93,18 @@ function HeroChart({ width = 240, height = 80, positive = true }: { width?: numb
 }
 
 function ScheduleTable({
-  rows, type, symbol, onUnitChange, onBulkApply, onReset,
+  rows, type, symbol, onUnitChange,
 }: {
   rows: { step: number; unit: number; qty: number; price: number; pool: number }[];
   type: "buy" | "sell";
   symbol: string;
   onUnitChange: (step: number, unit: number) => void;
-  onBulkApply: (unit: number) => void;
-  onReset: () => void;
 }) {
   const isBuy = type === "buy";
-  const [bulkUnit, setBulkUnit] = useState(1);
   const [showAll, setShowAll] = useState(false);
 
-  const accentBg = isBuy ? "bg-green-50/50" : "bg-red-50/50";
   const accentText = isBuy ? "text-green-600" : "text-red-500";
   const accentBar = isBuy ? "bg-green-500" : "bg-red-500";
-  const accentBtn = isBuy ? "bg-green-600 hover:bg-green-700" : "bg-red-500 hover:bg-red-600";
-
-  const applyBulk = () => onBulkApply(Math.max(1, Math.floor(bulkUnit)));
 
   const displayRows = showAll ? rows : rows.slice(0, 8);
 
@@ -126,32 +119,6 @@ function ScheduleTable({
         <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${isBuy ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
           자동 설정
         </span>
-      </div>
-
-      <div className={`flex items-center gap-2 mb-3 p-2.5 rounded-lg ${accentBg}`}>
-        <span className="text-xs text-gray-600 font-semibold whitespace-nowrap">⚡ 일괄 등록</span>
-        <input
-          type="number"
-          min="1"
-          value={bulkUnit}
-          onChange={(e) => setBulkUnit(Math.max(1, parseInt(e.target.value) || 1))}
-          onKeyDown={(e) => { if (e.key === "Enter") applyBulk(); }}
-          className="w-14 px-2 py-1 border border-gray-200 rounded text-xs text-center bg-white"
-        />
-        <span className="text-xs text-gray-500">주</span>
-        <button
-          onClick={applyBulk}
-          className={`px-2.5 py-1 rounded text-xs font-semibold text-white transition ${accentBtn}`}
-        >
-          전체 적용
-        </button>
-        <button
-          onClick={() => { setBulkUnit(1); onReset(); }}
-          className="px-2.5 py-1 rounded text-xs font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition"
-        >
-          초기화
-        </button>
-        <span className="text-[10px] text-gray-400 ml-auto whitespace-nowrap">모든 차수 동일 적용</span>
       </div>
 
       <div className="space-y-1">
@@ -169,7 +136,7 @@ function ScheduleTable({
                   min="1"
                   value={row.unit}
                   onChange={(e) => onUnitChange(row.step, Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-12 px-1 py-1 border border-gray-200 rounded text-xs text-center bg-white"
+                  className="w-14 px-2 py-1 border border-gray-200 rounded text-xs text-center bg-white"
                 />
                 <span className="text-[10px] text-gray-400">주</span>
               </div>
@@ -473,6 +440,10 @@ export default function VrEditorPage() {
             <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={startCycle} disabled={startingCycle || !!activeCycle}
+              className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition disabled:opacity-50">
+              {activeCycle ? `${activeCycle.cycleNumber}차 진행중` : startingCycle ? "시작중..." : "🔄 새 사이클 시작"}
+            </button>
             <button onClick={save} disabled={saving}
               className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition disabled:opacity-50">
               {saving ? "저장중..." : "파라미터 저장"}
@@ -578,12 +549,6 @@ export default function VrEditorPage() {
               <label className="block text-[11px] text-gray-500 mb-1">보유개수</label>
               <input type="number" value={params.currentQty} onChange={(e) => updateNumber("currentQty", e.target.value)} className={inputClass} min="0" />
             </div>
-            <div className="flex items-end">
-              <button onClick={startCycle} disabled={startingCycle || !!activeCycle}
-                className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition disabled:opacity-50">
-                {activeCycle ? `${activeCycle.cycleNumber}차 진행중` : "새 사이클 시작"}
-              </button>
-            </div>
           </div>
 
           <div className="bg-gray-50 rounded-xl p-4">
@@ -633,8 +598,6 @@ export default function VrEditorPage() {
             next[step - 1] = unit;
             setBuyUnits(next);
           }}
-          onBulkApply={(unit) => setBuyUnits(Array(30).fill(unit))}
-          onReset={() => setBuyUnits(Array(30).fill(1))}
         />
         <ScheduleTable
           rows={result?.sellTable || []}
@@ -645,8 +608,6 @@ export default function VrEditorPage() {
             next[step - 1] = unit;
             setSellUnits(next);
           }}
-          onBulkApply={(unit) => setSellUnits(Array(30).fill(unit))}
-          onReset={() => setSellUnits(Array(30).fill(1))}
         />
       </div>
 
