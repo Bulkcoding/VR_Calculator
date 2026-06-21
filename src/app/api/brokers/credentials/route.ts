@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   }
 
   const LABELS: Record<string, string> = {
-    kis: "한국투자증권", samsung: "삼성증권", kb: "KB증권",
+    kis: "한국투자증권", toss: "토스증권", samsung: "삼성증권", kb: "KB증권",
     mirae: "미래에셋증권", nh: "NH투자증권", shinhan: "신한투자증권",
     hana: "하나증권", daishin: "대신증권", yuanta: "유안타증권",
     eugene: "유진투자증권",

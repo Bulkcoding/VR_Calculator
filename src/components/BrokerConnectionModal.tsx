@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 
 const BROKERS = [
   { id: "kis", name: "한국투자증권", guideUrl: "https://apiportal.koreainvestment.com", supportsImport: true },
+  { id: "toss", name: "토스증권", guideUrl: "https://tossinvest.com", supportsImport: false },
   { id: "samsung", name: "삼성증권", guideUrl: "https://www.samsungpop.com", supportsImport: false },
   { id: "kb", name: "KB증권", guideUrl: "https://openapi.kbsec.com", supportsImport: false },
   { id: "mirae", name: "미래에셋증권", guideUrl: "https://securities.miraeasset.com", supportsImport: false },
@@ -31,6 +32,7 @@ export default function BrokerConnectionModal({
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{ msg: string; ok: boolean } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const reqBrokerRef = useRef(selectedBroker);
 
   const broker = BROKERS.find((b) => b.id === selectedBroker) || BROKERS[0];
 
@@ -45,17 +47,26 @@ export default function BrokerConnectionModal({
   }, []);
 
   useEffect(() => {
-    loadCreds(selectedBroker);
+    // 증권사를 전환하면 일단 모든 입력을 공란/미연동 상태로 초기화한 뒤
+    // 해당 증권사의 저장된 자격증명을 다시 불러온다.
+    reqBrokerRef.current = selectedBroker;
+    setHasCredentials(false);
+    setForm({ appKey: "", appSecret: "", accNo: "" });
     setResult(null);
+    loadCreds(selectedBroker);
   }, [selectedBroker]);
 
   const loadCreds = async (brokerId: string) => {
     const res = await fetch(`/api/brokers/credentials?broker=${brokerId}`);
     const d = await res.json();
-    setHasCredentials(!!d.hasCredentials);
+    // 응답이 도착하기 전에 다른 증권사로 전환했다면 이 응답은 무시한다.
+    if (reqBrokerRef.current !== brokerId) return;
     if (d.hasCredentials) {
+      setHasCredentials(true);
       setForm({ appKey: d.appKey || "", appSecret: "", accNo: d.accNo || "" });
     } else {
+      // 연동된 증권사가 아니면 ApiKey / ApiSecret / 계좌번호 모두 공란 유지
+      setHasCredentials(false);
       setForm({ appKey: "", appSecret: "", accNo: "" });
     }
   };
@@ -175,7 +186,7 @@ export default function BrokerConnectionModal({
           {/* Form */}
           <form id="broker-form" onSubmit={handleSave} className="space-y-3">
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">AppKey</label>
+              <label className="text-xs font-medium text-gray-700 mb-1 block">ApiKey</label>
               <input
                 placeholder="ABCD****1234****EFGH"
                 value={form.appKey}
@@ -185,7 +196,7 @@ export default function BrokerConnectionModal({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">AppSecret</label>
+              <label className="text-xs font-medium text-gray-700 mb-1 block">ApiSecret</label>
               <input
                 placeholder={hasCredentials ? "변경하지 않으려면 비워두세요" : "••••••••••••••••••••"}
                 type="password"

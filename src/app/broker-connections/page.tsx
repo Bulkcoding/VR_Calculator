@@ -8,6 +8,7 @@ import BrokerConnectionModal from "@/components/BrokerConnectionModal";
 
 const ALL_BROKERS = [
   { id: "kis", name: "한국투자증권", shortName: "KIS", color: "bg-blue-600", supportsImport: true },
+  { id: "toss", name: "토스증권", shortName: "TS", color: "bg-blue-500", supportsImport: false },
   { id: "samsung", name: "삼성증권", shortName: "SS", color: "bg-orange-500", supportsImport: false },
   { id: "kb", name: "KB증권", shortName: "KB", color: "bg-yellow-500", supportsImport: false },
   { id: "mirae", name: "미래에셋증권", shortName: "MA", color: "bg-teal-600", supportsImport: false },
