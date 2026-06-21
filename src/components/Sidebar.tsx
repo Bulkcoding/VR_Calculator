@@ -6,13 +6,14 @@ import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 
 const navItems = [
-  { href: "/", label: "대시보드", icon: "home" },
-  { href: "/portfolio", label: "포트폴리오", icon: "folder" },
-  { href: "/rebalancing", label: "리밸런싱", icon: "refresh" },
-  { href: "/cycles", label: "사이클 기록", icon: "clock" },
-  { href: "/notifications", label: "알림", icon: "bell" },
-  { href: "/api-settings", label: "API 연동", icon: "link" },
-  { href: "/settings", label: "설정", icon: "cog" },
+  { href: "/", label: "대시보드", icon: "home", disabled: false },
+  { href: "/portfolio", label: "포트폴리오", icon: "folder", disabled: true },
+  { href: "/rebalancing", label: "리밸런싱", icon: "refresh", disabled: true },
+  { href: "/cycles", label: "사이클 기록", icon: "clock", disabled: true },
+  { href: "/notifications", label: "알림", icon: "bell", disabled: true },
+  { href: "/broker-connections", label: "증권사 연동", icon: "shield", disabled: false },
+  { href: "/api-settings", label: "API 연동", icon: "link", disabled: true },
+  { href: "/settings", label: "설정", icon: "cog", disabled: true },
 ];
 
 function Icon({ name, className = "w-5 h-5" }: { name: string; className?: string }) {
@@ -96,6 +97,12 @@ function Icon({ name, className = "w-5 h-5" }: { name: string; className?: strin
           <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
         </svg>
       );
+    case "shield":
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -120,6 +127,17 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          if (item.disabled) {
+            return (
+              <div
+                key={item.href}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed select-none"
+              >
+                <Icon name={item.icon} className="w-5 h-5 text-gray-300" />
+                {item.label}
+              </div>
+            );
+          }
           return (
             <Link
               key={item.href}

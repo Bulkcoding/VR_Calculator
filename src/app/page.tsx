@@ -11,7 +11,7 @@ import ActivityItem from "@/components/ActivityItem";
 import CsvUploader from "@/components/CsvUploader";
 import ContextMenu from "@/components/ContextMenu";
 import EditHoldingForm from "@/components/EditHoldingForm";
-import KisSettings from "@/components/KisSettings";
+import BrokerConnectionModal from "@/components/BrokerConnectionModal";
 
 interface Holding {
   id: string;
@@ -429,7 +429,7 @@ export default function DashboardPage() {
         />
       )}
 
-      {showKis && <KisSettings onClose={() => setShowKis(false)} onImported={() => fetchHoldings()} />}
+      {showKis && <BrokerConnectionModal onClose={() => setShowKis(false)} onImported={() => fetchHoldings()} />}
 
       {editing && (
         <EditHoldingForm

@@ -1,5 +1,14 @@
 # VR 웹앱 커밋 로그
 
+## 2026-06-22 — feat: 증권사 연동 페이지 + 멀티 증권사 연동 모달
+- 사이드바: 미구현 메뉴(포트폴리오/리밸런싱/사이클 기록/알림/API 연동/설정) 클릭 비활성화 처리
+- 사이드바: "증권사 연동" 메뉴 추가 (`/broker-connections`)
+- `BrokerConnectionModal` 신규: 증권사 선택 드롭다운 + AppKey/Secret/계좌번호 입력 + 연동 상태 표시
+- 메인화면 우상단 "증권사 연동" 버튼 → 멀티 증권사 연동 모달로 교체
+- `/broker-connections` 페이지: 연동된/연동 가능한 증권사 목록 + 연동하기 버튼 → 모달 오픈
+- API: `/api/brokers/credentials` (증권사별 자격증명 CRUD), `/api/brokers/list` (연동 목록)
+- 보유종목 불러오기는 현재 KIS만 지원 (그 외 증권사는 비활성)
+
 ## 2026-06-19 — feat: 로그인/회원가입 추가
 - NextAuth v5 설치 및 auth 설정
 - Prisma User 모델에 password 필드 추가
