@@ -27,6 +27,7 @@ export default function BrokerConnectionModal({
   const [selectedBroker, setSelectedBroker] = useState(initialBroker);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hasCredentials, setHasCredentials] = useState(false);
+  const [needsReauth, setNeedsReauth] = useState(false);
   const [form, setForm] = useState({ appKey: "", appSecret: "", accNo: "" });
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -51,6 +52,7 @@ export default function BrokerConnectionModal({
     // 해당 증권사의 저장된 자격증명을 다시 불러온다.
     reqBrokerRef.current = selectedBroker;
     setHasCredentials(false);
+    setNeedsReauth(false);
     setForm({ appKey: "", appSecret: "", accNo: "" });
     setResult(null);
     loadCreds(selectedBroker);
@@ -62,11 +64,14 @@ export default function BrokerConnectionModal({
     // 응답이 도착하기 전에 다른 증권사로 전환했다면 이 응답은 무시한다.
     if (reqBrokerRef.current !== brokerId) return;
     if (d.hasCredentials) {
+      // 연동된 증권사: 저장된 ApiKey / 계좌번호를 보여준다. (ApiSecret은 보안상 제외)
       setHasCredentials(true);
+      setNeedsReauth(!!d.needsReauth);
       setForm({ appKey: d.appKey || "", appSecret: "", accNo: d.accNo || "" });
     } else {
       // 연동된 증권사가 아니면 ApiKey / ApiSecret / 계좌번호 모두 공란 유지
       setHasCredentials(false);
+      setNeedsReauth(false);
       setForm({ appKey: "", appSecret: "", accNo: "" });
     }
   };
@@ -81,6 +86,7 @@ export default function BrokerConnectionModal({
     });
     if (res.ok) {
       setHasCredentials(true);
+      setNeedsReauth(false);
       setResult({ msg: "연동이 완료되었습니다.", ok: true });
     } else {
       const d = await res.json();
@@ -93,6 +99,7 @@ export default function BrokerConnectionModal({
     const res = await fetch(`/api/brokers/credentials?broker=${selectedBroker}`, { method: "DELETE" });
     if (res.ok) {
       setHasCredentials(false);
+      setNeedsReauth(false);
       setForm({ appKey: "", appSecret: "", accNo: "" });
       setResult({ msg: "연동이 해제되었습니다.", ok: true });
     }
@@ -170,15 +177,28 @@ export default function BrokerConnectionModal({
             {hasCredentials && (
               <div className="flex-1">
                 <p className="text-xs font-medium text-transparent mb-1.5 select-none">상태</p>
-                <div className="flex items-start gap-2 px-3 py-2.5 bg-green-50 border border-green-200 rounded-lg h-[42px]">
-                  <svg className="w-4 h-4 text-green-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  <div>
-                    <p className="text-xs font-semibold text-green-700 leading-none">현재 연동 상태: 정상</p>
-                    <p className="text-[11px] text-green-600 mt-0.5">API 키가 등록되어 있습니다</p>
+                {needsReauth ? (
+                  <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg h-[42px]">
+                    <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                      <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    <div>
+                      <p className="text-xs font-semibold text-amber-700 leading-none">재인증 필요</p>
+                      <p className="text-[11px] text-amber-600 mt-0.5">저장된 키를 읽을 수 없어요. 다시 입력해 주세요</p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-start gap-2 px-3 py-2.5 bg-green-50 border border-green-200 rounded-lg h-[42px]">
+                    <svg className="w-4 h-4 text-green-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <div>
+                      <p className="text-xs font-semibold text-green-700 leading-none">현재 연동 상태: 정상</p>
+                      <p className="text-[11px] text-green-600 mt-0.5">API 키가 등록되어 있습니다</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -198,11 +218,11 @@ export default function BrokerConnectionModal({
             <div>
               <label className="text-xs font-medium text-gray-700 mb-1 block">ApiSecret</label>
               <input
-                placeholder={hasCredentials ? "변경하지 않으려면 비워두세요" : "발급받은 ApiSecret를 입력하세요"}
+                placeholder={hasCredentials && !needsReauth ? "변경하지 않으려면 비워두세요" : "발급받은 ApiSecret를 입력하세요"}
                 type="password"
                 value={form.appSecret}
                 onChange={(e) => setForm({ ...form, appSecret: e.target.value })}
-                required={!hasCredentials}
+                required={!hasCredentials || needsReauth}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>

@@ -22,10 +22,20 @@ export async function GET(req: NextRequest) {
   });
   if (!cred) return NextResponse.json({ hasCredentials: false });
 
-  let decrypted = { appKey: "", appSecret: "", accNo: "" };
+  let decrypted: { appKey: string; appSecret: string; accNo: string } | null = null;
   try { decrypted = JSON.parse(decrypt(cred.encryptedKey)); } catch {}
 
-  return NextResponse.json({ hasCredentials: true, appKey: decrypted.appKey, accNo: decrypted.accNo });
+  // 복호화 실패: 저장 시점과 암호화 키가 달라 저장된 값을 복구할 수 없는 상태.
+  // 빈 값으로 "연동됨"처럼 보이지 않도록 재입력이 필요함을 알린다.
+  if (!decrypted) {
+    return NextResponse.json({ hasCredentials: true, needsReauth: true, appKey: "", accNo: "" });
+  }
+
+  return NextResponse.json({
+    hasCredentials: true,
+    appKey: decrypted.appKey || "",
+    accNo: decrypted.accNo || "",
+  });
 }
 
 export async function POST(req: NextRequest) {
