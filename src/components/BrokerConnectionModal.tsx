@@ -188,7 +188,7 @@ export default function BrokerConnectionModal({
             <div>
               <label className="text-xs font-medium text-gray-700 mb-1 block">ApiKey</label>
               <input
-                placeholder="ABCD****1234****EFGH"
+                placeholder="발급받은 ApiKey를 입력하세요"
                 value={form.appKey}
                 onChange={(e) => setForm({ ...form, appKey: e.target.value })}
                 required
@@ -198,7 +198,7 @@ export default function BrokerConnectionModal({
             <div>
               <label className="text-xs font-medium text-gray-700 mb-1 block">ApiSecret</label>
               <input
-                placeholder={hasCredentials ? "변경하지 않으려면 비워두세요" : "••••••••••••••••••••"}
+                placeholder={hasCredentials ? "변경하지 않으려면 비워두세요" : "발급받은 ApiSecret를 입력하세요"}
                 type="password"
                 value={form.appSecret}
                 onChange={(e) => setForm({ ...form, appSecret: e.target.value })}
@@ -209,7 +209,7 @@ export default function BrokerConnectionModal({
             <div>
               <label className="text-xs font-medium text-gray-700 mb-1 block">계좌번호</label>
               <input
-                placeholder="****-*****-123456-01"
+                placeholder="예: 12345678-01"
                 value={form.accNo}
                 onChange={(e) => setForm({ ...form, accNo: e.target.value })}
                 required
