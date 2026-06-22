@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import DashboardShell from "@/components/DashboardShell";
@@ -196,16 +196,11 @@ export default function DashboardPage() {
     fetchWatchlist();
   };
 
-  // 드래그로 관심종목 순서 변경
-  const handleWatchDrop = async () => {
-    setDragIndex(null);
-    const tickers = watchlist.map((w) => w.ticker);
-    await fetch("/api/watchlist", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tickers }),
-    });
-  };
+  // 관심종목 순서 변경 (Pointer Events: 데스크톱 마우스 + 모바일 터치 동시 지원)
+  const watchlistRef = useRef<WatchItem[]>([]);
+  useEffect(() => { watchlistRef.current = watchlist; }, [watchlist]);
+  const dragActiveRef = useRef(false);
+  const dragIdxRef = useRef(-1);
 
   const reorderWatch = (from: number, to: number) => {
     setWatchlist((prev) => {
@@ -215,6 +210,42 @@ export default function DashboardPage() {
       next.splice(to, 0, moved);
       return next;
     });
+  };
+
+  const persistWatchOrder = async () => {
+    const tickers = watchlistRef.current.map((w) => w.ticker);
+    await fetch("/api/watchlist", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tickers }),
+    });
+  };
+
+  const startWatchDrag = (index: number) => {
+    dragActiveRef.current = true;
+    dragIdxRef.current = index;
+    setDragIndex(index);
+  };
+
+  const moveWatchDrag = (clientX: number, clientY: number) => {
+    if (!dragActiveRef.current) return;
+    const el = document.elementFromPoint(clientX, clientY);
+    const row = el?.closest("[data-watch-index]") as HTMLElement | null;
+    if (!row) return;
+    const over = parseInt(row.dataset.watchIndex || "", 10);
+    const from = dragIdxRef.current;
+    if (Number.isNaN(over) || over === from) return;
+    reorderWatch(from, over);
+    dragIdxRef.current = over;
+    setDragIndex(over);
+  };
+
+  const endWatchDrag = () => {
+    if (!dragActiveRef.current) return;
+    dragActiveRef.current = false;
+    dragIdxRef.current = -1;
+    setDragIndex(null);
+    persistWatchOrder();
   };
 
   const refreshPrices = useCallback(async () => {
@@ -542,13 +573,17 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={w.id}
-                    draggable
-                    onDragStart={() => setDragIndex(i)}
-                    onDragOver={(e) => { e.preventDefault(); if (dragIndex !== null && dragIndex !== i) { reorderWatch(dragIndex, i); setDragIndex(i); } }}
-                    onDragEnd={handleWatchDrop}
+                    data-watch-index={i}
                     className={`flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition ${dragIndex === i ? "bg-blue-50 opacity-70" : ""}`}
                   >
-                    <span className="w-4 shrink-0 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500" title="드래그하여 순서 변경">
+                    <span
+                      className="w-4 shrink-0 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 touch-none"
+                      title="드래그하여 순서 변경"
+                      onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); startWatchDrag(i); }}
+                      onPointerMove={(e) => moveWatchDrag(e.clientX, e.clientY)}
+                      onPointerUp={endWatchDrag}
+                      onPointerCancel={endWatchDrag}
+                    >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
                     </span>
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
