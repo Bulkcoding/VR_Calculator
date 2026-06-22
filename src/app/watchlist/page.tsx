@@ -202,7 +202,7 @@ export default function WatchlistPage() {
                       </button>
                     </div>
                     {isOpen && (
-                      <div id="stock-chart-container" className="px-5 pb-5 pt-1">
+                      <div className="px-5 pb-5 pt-1">
                         <StockChart
                           ticker={it.ticker}
                           currencySymbol={unit}

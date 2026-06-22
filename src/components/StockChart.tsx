@@ -68,15 +68,17 @@ export default function StockChart({
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [isPressed, setIsPressed] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // 컨테이너 실제 너비를 ref + ResizeObserver로 측정 (id 중복/패널 밖 오버플로우 방지)
   useEffect(() => {
-    const onResize = () => {
-      const el = document.getElementById("stock-chart-container");
-      if (el) setWidth(el.clientWidth);
-    };
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => setWidth(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -196,8 +198,8 @@ export default function StockChart({
       </div>
 
       <div
-        id="stock-chart-container"
-        className="relative w-full touch-none"
+        ref={containerRef}
+        className="relative w-full overflow-hidden touch-none"
         style={{ height }}
         onMouseLeave={handleLeave}
         onTouchEnd={handleTouchEnd}

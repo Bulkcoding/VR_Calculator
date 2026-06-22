@@ -12,6 +12,7 @@ import CsvUploader from "@/components/CsvUploader";
 import ContextMenu from "@/components/ContextMenu";
 import EditHoldingForm from "@/components/EditHoldingForm";
 import BrokerConnectionModal from "@/components/BrokerConnectionModal";
+import WatchlistAddModal from "@/components/WatchlistAddModal";
 
 interface Holding {
   id: string;
@@ -161,6 +162,7 @@ export default function DashboardPage() {
   const [editing, setEditing] = useState<Holding | null>(null);
   const [showKis, setShowKis] = useState(false);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
+  const [showWatchAdd, setShowWatchAdd] = useState(false);
 
   const fetchHoldings = useCallback(async () => {
     const res = await fetch("/api/holdings");
@@ -171,6 +173,11 @@ export default function DashboardPage() {
     const res = await fetch("/api/watchlist");
     if (res.ok) setWatchlist(await res.json());
   }, []);
+
+  const removeWatch = async (ticker: string) => {
+    await fetch(`/api/watchlist?ticker=${encodeURIComponent(ticker)}`, { method: "DELETE" });
+    fetchWatchlist();
+  };
 
   const refreshPrices = useCallback(async () => {
     await fetch("/api/holdings/refresh", { method: "POST" });
@@ -371,38 +378,57 @@ export default function DashboardPage() {
           {holdings.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-10">보유중인 종목이 없습니다.<br />종목 추가 버튼을 눌러 시작해보세요.</p>
           ) : (
-            <div className="divide-y divide-gray-100 -mx-5">
-              {holdings.map((h, idx) => {
-                const unit = sym(h.currency);
-                const hasPrice = h.currentPrice !== null;
-                const gainPct = hasPrice ? ((h.currentPrice! - h.avgPrice) / h.avgPrice) * 100 : 0;
-                const positive = gainPct >= 0;
-                const spark = mockSparkline(idx + 1, positive ? "up" : "down");
-                return (
-                  <div key={h.id} onContextMenu={(e) => handleContextMenu(e, h)}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                      {h.ticker.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm text-gray-900 truncate">{h.name}</div>
-                      <div className="text-xs text-gray-400">{h.ticker} · {h.broker === "manual" ? "수동" : h.broker.toUpperCase()}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-semibold text-gray-900">{unit}{hasPrice ? h.currentPrice!.toLocaleString() : "—"}</div>
-                      <div className={`text-xs font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
-                        {hasPrice ? `${positive ? "+" : ""}${gainPct.toFixed(2)}%` : "미조회"}
+            <div className="-mx-5">
+              {/* 컬럼 헤더 */}
+              <div className="hidden sm:flex items-center gap-3 px-5 pb-2 text-[11px] font-medium text-gray-400 border-b border-gray-100">
+                <div className="w-10 shrink-0" />
+                <div className="flex-1 min-w-0">종목</div>
+                <div className="w-14 text-right">보유수량</div>
+                <div className="w-20 text-right">평균단가</div>
+                <div className="w-24 text-right">현재가</div>
+                <div className="w-14 text-right">수익률</div>
+                <div className="hidden md:block w-20 text-center">차트</div>
+                <div className="w-4 shrink-0" />
+              </div>
+              <div className="divide-y divide-gray-100">
+                {holdings.map((h, idx) => {
+                  const unit = sym(h.currency);
+                  const hasPrice = h.currentPrice !== null;
+                  const gainPct = hasPrice ? ((h.currentPrice! - h.avgPrice) / h.avgPrice) * 100 : 0;
+                  const positive = gainPct >= 0;
+                  const spark = mockSparkline(idx + 1, positive ? "up" : "down");
+                  return (
+                    <div key={h.id} onContextMenu={(e) => handleContextMenu(e, h)}
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        {h.ticker.slice(0, 2).toUpperCase()}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm text-gray-900 truncate">{h.name}</div>
+                        <div className="text-xs text-gray-400 truncate">{h.ticker} · {h.broker === "manual" ? "수동" : h.broker.toUpperCase()}</div>
+                      </div>
+                      <div className="hidden sm:block w-14 text-right text-sm text-gray-700">
+                        {h.quantity.toLocaleString(undefined, { maximumFractionDigits: 2 })}주
+                      </div>
+                      <div className="hidden sm:block w-20 text-right text-sm text-gray-700">
+                        {unit}{h.avgPrice.toLocaleString()}
+                      </div>
+                      <div className="w-24 text-right text-sm font-semibold text-gray-900">
+                        {unit}{hasPrice ? h.currentPrice!.toLocaleString() : "—"}
+                      </div>
+                      <div className={`w-14 text-right text-xs font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
+                        {hasPrice ? `${positive ? "+" : ""}${gainPct.toFixed(2)}%` : "—"}
+                      </div>
+                      <div className="hidden md:block w-20">
+                        <Sparkline points={spark} color={positive ? "#10b981" : "#ef4444"} />
+                      </div>
+                      <Link href={`/holdings/${h.id}`} className="text-gray-300 hover:text-gray-600 shrink-0">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                      </Link>
                     </div>
-                    <div className="hidden sm:block w-20">
-                      <Sparkline points={spark} color={positive ? "#10b981" : "#ef4444"} />
-                    </div>
-                    <Link href={`/holdings/${h.id}`} className="text-gray-300 hover:text-gray-600">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-                    </Link>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </CardShell>
@@ -430,49 +456,71 @@ export default function DashboardPage() {
       <CardShell
         title="관심종목"
         action={
-          <Link href="/watchlist" className="text-xs text-blue-600 hover:underline font-medium">전체보기</Link>
+          <div className="flex items-center gap-2">
+            <Link href="/watchlist" className="text-xs text-blue-600 hover:underline font-medium">전체보기</Link>
+            <button
+              onClick={() => setShowWatchAdd(true)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition"
+            >
+              + 관심종목 추가
+            </button>
+          </div>
         }
         className="mb-6"
       >
         {watchlist.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-10">
             관심종목이 없습니다.{" "}
-            <Link href="/watchlist" className="text-blue-600 hover:underline">추가하러 가기</Link>
+            <button onClick={() => setShowWatchAdd(true)} className="text-blue-600 hover:underline">추가하기</button>
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {watchlist.map((w) => {
-              const unit = w.currency === "USD" ? "$" : "₩";
-              const positive = (w.changePct ?? 0) >= 0;
-              return (
-                <Link
-                  key={w.id}
-                  href="/watchlist"
-                  className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {w.ticker.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-gray-900 truncate">{w.name}</div>
-                    <div className="text-xs text-gray-400 truncate">{w.ticker}</div>
-                  </div>
-                  <div className="hidden sm:block w-16 shrink-0">
-                    {w.spark && w.spark.length > 1 && (
-                      <Sparkline points={w.spark} color={positive ? "#10b981" : "#ef4444"} />
-                    )}
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-sm font-semibold text-gray-900">
+          <div className="-mx-5">
+            {/* 컬럼 헤더 */}
+            <div className="hidden sm:flex items-center gap-3 px-5 pb-2 text-[11px] font-medium text-gray-400 border-b border-gray-100">
+              <div className="w-10 shrink-0" />
+              <div className="flex-1 min-w-0">종목</div>
+              <div className="w-24 text-right">현재가</div>
+              <div className="w-16 text-right">등락률</div>
+              <div className="hidden md:block w-20 text-center">1일 차트</div>
+              <div className="w-6 shrink-0" />
+            </div>
+            <div className="divide-y divide-gray-100">
+              {watchlist.map((w) => {
+                const unit = w.currency === "USD" ? "$" : "₩";
+                const positive = (w.changePct ?? 0) >= 0;
+                return (
+                  <div key={w.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition group">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      {w.ticker.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-gray-900 truncate">{w.name}</div>
+                      <div className="text-xs text-gray-400 truncate">{w.ticker}{w.market ? ` · ${w.market}` : ""}</div>
+                    </div>
+                    <div className="w-24 text-right text-sm font-semibold text-gray-900">
                       {w.currentPrice != null ? `${unit}${w.currentPrice.toLocaleString()}` : "—"}
                     </div>
-                    <div className={`text-xs font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
+                    <div className={`w-16 text-right text-xs font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
                       {w.changePct != null ? `${positive ? "+" : ""}${w.changePct.toFixed(2)}%` : "—"}
                     </div>
+                    <div className="hidden md:block w-20">
+                      {w.spark && w.spark.length > 1 && (
+                        <Sparkline points={w.spark} color={positive ? "#10b981" : "#ef4444"} />
+                      )}
+                    </div>
+                    <button
+                      onClick={() => removeWatch(w.ticker)}
+                      title="관심 해제"
+                      className="w-6 shrink-0 flex items-center justify-center text-yellow-400 hover:text-gray-300 transition"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    </button>
                   </div>
-                </Link>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
       </CardShell>
@@ -502,6 +550,14 @@ export default function DashboardPage() {
       )}
 
       {showKis && <BrokerConnectionModal onClose={() => setShowKis(false)} onImported={() => fetchHoldings()} />}
+
+      {showWatchAdd && (
+        <WatchlistAddModal
+          existingTickers={watchlist.map((w) => w.ticker)}
+          onClose={() => setShowWatchAdd(false)}
+          onAdded={fetchWatchlist}
+        />
+      )}
 
       {editing && (
         <EditHoldingForm
