@@ -24,6 +24,17 @@ interface Holding {
   broker: string;
 }
 
+interface WatchItem {
+  id: string;
+  ticker: string;
+  name: string;
+  market: string | null;
+  currency: string;
+  currentPrice: number | null;
+  changePct: number | null;
+  spark: number[];
+}
+
 function LoginView({ onRegister }: { onRegister: () => void }) {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -149,10 +160,16 @@ export default function DashboardPage() {
   const [menu, setMenu] = useState<{ x: number; y: number; holding: Holding } | null>(null);
   const [editing, setEditing] = useState<Holding | null>(null);
   const [showKis, setShowKis] = useState(false);
+  const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
 
   const fetchHoldings = useCallback(async () => {
     const res = await fetch("/api/holdings");
     if (res.ok) setHoldings(await res.json());
+  }, []);
+
+  const fetchWatchlist = useCallback(async () => {
+    const res = await fetch("/api/watchlist");
+    if (res.ok) setWatchlist(await res.json());
   }, []);
 
   const refreshPrices = useCallback(async () => {
@@ -164,10 +181,11 @@ export default function DashboardPage() {
     if (status === "authenticated") {
       fetchHoldings();
       refreshPrices();
+      fetchWatchlist();
       const interval = setInterval(refreshPrices, 30000);
       return () => clearInterval(interval);
     }
-  }, [status, fetchHoldings, refreshPrices]);
+  }, [status, fetchHoldings, refreshPrices, fetchWatchlist]);
 
   const addHolding = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -408,6 +426,56 @@ export default function DashboardPage() {
           </div>
         </CardShell>
       </div>
+
+      <CardShell
+        title="관심종목"
+        action={
+          <Link href="/watchlist" className="text-xs text-blue-600 hover:underline font-medium">전체보기</Link>
+        }
+        className="mb-6"
+      >
+        {watchlist.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-10">
+            관심종목이 없습니다.{" "}
+            <Link href="/watchlist" className="text-blue-600 hover:underline">추가하러 가기</Link>
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {watchlist.map((w) => {
+              const unit = w.currency === "USD" ? "$" : "₩";
+              const positive = (w.changePct ?? 0) >= 0;
+              return (
+                <Link
+                  key={w.id}
+                  href="/watchlist"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {w.ticker.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-gray-900 truncate">{w.name}</div>
+                    <div className="text-xs text-gray-400 truncate">{w.ticker}</div>
+                  </div>
+                  <div className="hidden sm:block w-16 shrink-0">
+                    {w.spark && w.spark.length > 1 && (
+                      <Sparkline points={w.spark} color={positive ? "#10b981" : "#ef4444"} />
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {w.currentPrice != null ? `${unit}${w.currentPrice.toLocaleString()}` : "—"}
+                    </div>
+                    <div className={`text-xs font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
+                      {w.changePct != null ? `${positive ? "+" : ""}${w.changePct.toFixed(2)}%` : "—"}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </CardShell>
 
       <CardShell
         title="최근 활동"
