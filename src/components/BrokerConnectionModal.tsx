@@ -204,52 +204,35 @@ export default function BrokerConnectionModal({
           </div>
 
           {/* Form */}
-          <form id="broker-form" onSubmit={handleSave} className="space-y-3" autoComplete="off">
-            {/* 크롬 비밀번호 관리자가 첫 입력 필드를 아이디로 오인해 자동완성하는 것을 막기 위한 더미 필드 */}
-            <input type="text" name="username" autoComplete="username" className="hidden" tabIndex={-1} aria-hidden="true" />
+          <form id="broker-form" onSubmit={handleSave} className="space-y-3">
             <div>
               <label className="text-xs font-medium text-gray-700 mb-1 block">ApiKey</label>
               <input
-                name="broker-api-key"
                 placeholder="발급받은 ApiKey를 입력하세요"
                 value={form.appKey}
                 onChange={(e) => setForm({ ...form, appKey: e.target.value })}
                 required
-                autoComplete="off"
-                data-lpignore="true"
-                data-1p-ignore="true"
-                data-form-type="other"
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-700 mb-1 block">ApiSecret</label>
               <input
-                name="broker-api-secret"
                 placeholder={hasCredentials && !needsReauth ? "변경하지 않으려면 비워두세요" : "발급받은 ApiSecret를 입력하세요"}
                 type="password"
                 value={form.appSecret}
                 onChange={(e) => setForm({ ...form, appSecret: e.target.value })}
                 required={!hasCredentials || needsReauth}
-                autoComplete="new-password"
-                data-lpignore="true"
-                data-1p-ignore="true"
-                data-form-type="other"
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-700 mb-1 block">계좌번호</label>
               <input
-                name="broker-acc-no"
                 placeholder="예: 12345678-01"
                 value={form.accNo}
                 onChange={(e) => setForm({ ...form, accNo: e.target.value })}
                 required
-                autoComplete="off"
-                data-lpignore="true"
-                data-1p-ignore="true"
-                data-form-type="other"
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
