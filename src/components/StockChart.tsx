@@ -4,7 +4,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import type { ChartData, ChartPoint } from "@/lib/stockApi";
 
 interface StockChartProps {
-  holdingId: string;
+  holdingId?: string;
+  ticker?: string;
   symbol?: string;
   positive?: boolean;
   currencySymbol?: string;
@@ -57,6 +58,7 @@ export default function StockChart({
   positive = true,
   currencySymbol = "$",
   height = 140,
+  ticker,
 }: StockChartProps) {
   const [range, setRange] = useState("1mo");
   const [data, setData] = useState<ChartData | null>(null);
@@ -83,7 +85,10 @@ export default function StockChart({
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/holdings/${holdingId}/chart?range=${range}`);
+        const url = ticker
+          ? `/api/stocks/chart?ticker=${encodeURIComponent(ticker)}&range=${range}`
+          : `/api/holdings/${holdingId}/chart?range=${range}`;
+        const res = await fetch(url);
         if (!res.ok) {
           const d = await res.json().catch(() => ({}));
           throw new Error(d.error || "차트 로드 실패");
@@ -96,9 +101,9 @@ export default function StockChart({
         if (!cancelled) setLoading(false);
       }
     };
-    if (holdingId) fetchChart();
+    if (holdingId || ticker) fetchChart();
     return () => { cancelled = true; };
-  }, [holdingId, range]);
+  }, [holdingId, ticker, range]);
 
   const pad = 8;
   const lineColor = data
@@ -108,7 +113,7 @@ export default function StockChart({
     : positive
     ? "#10b981"
     : "#ef4444";
-  const gradId = `chart-grad-${holdingId}-${range}`;
+  const gradId = `chart-grad-${holdingId || ticker || "wl"}-${range}`;
   const path = data ? buildPath(data.points, width, height, pad) : null;
   const stepX = data ? width / (data.points.length - 1 || 1) : 0;
   const innerH = height - pad * 2;

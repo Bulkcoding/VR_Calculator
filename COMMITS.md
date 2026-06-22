@@ -1,5 +1,13 @@
 # VR 웹앱 커밋 로그
 
+## 2026-06-22 — feat: 관심종목(Watchlist) 기능 추가
+- WatchlistItem 모델 추가 (보유종목과 별도 목록) + Neon DB 반영
+- 종목 검색 다중 결과 표시 후 선택 (searchStocks, /api/stocks/search)
+- /api/watchlist CRUD (현재가는 Yahoo 실시간 조회)
+- /api/stocks/chart 티커 기반 차트 + StockChart 티커 지원
+- /watchlist 페이지: 검색→관심추가→현재가/차트 표시
+- 사이드바 "관심종목" 메뉴 활성화
+
 ## 2026-06-22 — fix: 연동된 증권사의 저장된 ApiKey/계좌번호 표시 + 복호화 실패 처리
 - 연동된 증권사 선택 시 저장된 ApiKey·계좌번호 표시 (ApiSecret은 보안상 제외)
 - 복호화 실패 시(암호화 키 변경 등) "재인증 필요" 상태 표시 + ApiSecret 재입력 요구

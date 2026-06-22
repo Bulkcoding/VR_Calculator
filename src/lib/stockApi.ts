@@ -26,24 +26,34 @@ export interface ChartData {
   changePct: number;
 }
 
-async function searchNaver(name: string): Promise<StockSearchResult | null> {
+async function searchNaverMulti(name: string): Promise<StockSearchResult[]> {
   try {
     const res = await fetch(
-      `https://ac.stock.naver.com/ac?target=stock&ie=utf8&count=5&q=${encodeURIComponent(name)}`,
+      `https://ac.stock.naver.com/ac?target=stock&ie=utf8&count=10&q=${encodeURIComponent(name)}`,
       { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(4000) }
     );
     const data = await res.json();
     const items = data?.items;
-    if (!items || items.length === 0) return null;
-    const first = items[0];
-    return { ticker: String(first.code), name: String(first.name), market: String(first.typeCode) };
+    if (!Array.isArray(items)) return [];
+    return items
+      .map((it: Record<string, unknown>) => ({
+        ticker: String(it.code ?? ""),
+        name: String(it.name ?? ""),
+        market: String(it.typeName ?? it.typeCode ?? ""),
+      }))
+      .filter((r: StockSearchResult) => r.ticker && r.name);
   } catch {
-    return null;
+    return [];
   }
 }
 
+export async function searchStocks(name: string): Promise<StockSearchResult[]> {
+  return searchNaverMulti(name);
+}
+
 export async function searchStock(name: string): Promise<StockSearchResult | null> {
-  return searchNaver(name);
+  const all = await searchNaverMulti(name);
+  return all[0] ?? null;
 }
 
 function buildSymbols(ticker: string): string[] {
