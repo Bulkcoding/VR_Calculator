@@ -23,7 +23,6 @@ interface Holding {
   currentPrice: number | null;
   currency: string;
   broker: string;
-  spark?: number[];
 }
 
 interface WatchItem {
@@ -33,6 +32,9 @@ interface WatchItem {
   market: string | null;
   currency: string;
   currentPrice: number | null;
+}
+
+interface ChartInfo {
   changePct: number | null;
   spark: number[];
 }
@@ -164,6 +166,9 @@ export default function DashboardPage() {
   const [showKis, setShowKis] = useState(false);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
   const [showWatchAdd, setShowWatchAdd] = useState(false);
+  const [holdingSparks, setHoldingSparks] = useState<Record<string, number[]>>({});
+  const [watchCharts, setWatchCharts] = useState<Record<string, ChartInfo>>({});
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const fetchHoldings = useCallback(async () => {
     const res = await fetch("/api/holdings");
@@ -175,9 +180,41 @@ export default function DashboardPage() {
     if (res.ok) setWatchlist(await res.json());
   }, []);
 
+  // 차트(스파크라인)는 별도 60초 주기로 갱신
+  const fetchHoldingSparks = useCallback(async () => {
+    const res = await fetch("/api/holdings/sparklines");
+    if (res.ok) setHoldingSparks(await res.json());
+  }, []);
+
+  const fetchWatchCharts = useCallback(async () => {
+    const res = await fetch("/api/watchlist/charts");
+    if (res.ok) setWatchCharts(await res.json());
+  }, []);
+
   const removeWatch = async (ticker: string) => {
     await fetch(`/api/watchlist?ticker=${encodeURIComponent(ticker)}`, { method: "DELETE" });
     fetchWatchlist();
+  };
+
+  // 드래그로 관심종목 순서 변경
+  const handleWatchDrop = async () => {
+    setDragIndex(null);
+    const tickers = watchlist.map((w) => w.ticker);
+    await fetch("/api/watchlist", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tickers }),
+    });
+  };
+
+  const reorderWatch = (from: number, to: number) => {
+    setWatchlist((prev) => {
+      if (from === to || from < 0 || to < 0 || from >= prev.length || to >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
   };
 
   const refreshPrices = useCallback(async () => {
@@ -187,16 +224,27 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
+      // 최초 1회: 현재가 + 차트 모두 로드
       refreshPrices();
       fetchWatchlist();
-      // 30초마다 현재가/수익률/차트(보유·관심) 실시간 갱신
-      const interval = setInterval(() => {
+      fetchHoldingSparks();
+      fetchWatchCharts();
+      // 현재가/수익률: 30초 주기
+      const priceInterval = setInterval(() => {
         refreshPrices();
         fetchWatchlist();
       }, 30000);
-      return () => clearInterval(interval);
+      // 차트(스파크라인): 60초 주기
+      const chartInterval = setInterval(() => {
+        fetchHoldingSparks();
+        fetchWatchCharts();
+      }, 60000);
+      return () => {
+        clearInterval(priceInterval);
+        clearInterval(chartInterval);
+      };
     }
-  }, [status, refreshPrices, fetchWatchlist]);
+  }, [status, refreshPrices, fetchWatchlist, fetchHoldingSparks, fetchWatchCharts]);
 
   const addHolding = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -390,7 +438,7 @@ export default function DashboardPage() {
                   const hasPrice = h.currentPrice !== null;
                   const gainPct = hasPrice ? ((h.currentPrice! - h.avgPrice) / h.avgPrice) * 100 : 0;
                   const positive = gainPct >= 0;
-                  const spark = h.spark && h.spark.length > 1 ? h.spark : [];
+                  const spark = holdingSparks[h.id] && holdingSparks[h.id].length > 1 ? holdingSparks[h.id] : [];
                   return (
                     <div key={h.id} onContextMenu={(e) => handleContextMenu(e, h)}
                       className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
@@ -476,6 +524,7 @@ export default function DashboardPage() {
           <div className="-mx-5">
             {/* 컬럼 헤더 */}
             <div className="hidden sm:flex items-center gap-3 px-5 pb-2 text-[11px] font-medium text-gray-400 border-b border-gray-100">
+              <div className="w-4 shrink-0" />
               <div className="w-10 shrink-0" />
               <div className="flex-1 min-w-0">종목</div>
               <div className="w-24 text-right">현재가</div>
@@ -484,11 +533,24 @@ export default function DashboardPage() {
               <div className="w-6 shrink-0" />
             </div>
             <div className="divide-y divide-gray-100">
-              {watchlist.map((w) => {
+              {watchlist.map((w, i) => {
                 const unit = w.currency === "USD" ? "$" : "₩";
-                const positive = (w.changePct ?? 0) >= 0;
+                const chart = watchCharts[w.ticker];
+                const changePct = chart?.changePct ?? null;
+                const spark = chart?.spark ?? [];
+                const positive = (changePct ?? 0) >= 0;
                 return (
-                  <div key={w.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition group">
+                  <div
+                    key={w.id}
+                    draggable
+                    onDragStart={() => setDragIndex(i)}
+                    onDragOver={(e) => { e.preventDefault(); if (dragIndex !== null && dragIndex !== i) { reorderWatch(dragIndex, i); setDragIndex(i); } }}
+                    onDragEnd={handleWatchDrop}
+                    className={`flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition ${dragIndex === i ? "bg-blue-50 opacity-70" : ""}`}
+                  >
+                    <span className="w-4 shrink-0 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500" title="드래그하여 순서 변경">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                    </span>
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
                       {w.ticker.slice(0, 2).toUpperCase()}
                     </div>
@@ -500,11 +562,11 @@ export default function DashboardPage() {
                       {w.currentPrice != null ? `${unit}${w.currentPrice.toLocaleString()}` : "—"}
                     </div>
                     <div className={`w-16 text-right text-xs font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
-                      {w.changePct != null ? `${positive ? "+" : ""}${w.changePct.toFixed(2)}%` : "—"}
+                      {changePct != null ? `${positive ? "+" : ""}${changePct.toFixed(2)}%` : "—"}
                     </div>
                     <div className="hidden md:block w-20">
-                      {w.spark && w.spark.length > 1 && (
-                        <Sparkline points={w.spark} color={positive ? "#10b981" : "#ef4444"} />
+                      {spark.length > 1 && (
+                        <Sparkline points={spark} color={positive ? "#10b981" : "#ef4444"} />
                       )}
                     </div>
                     <button

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { searchStock, fetchCurrentPrice, fetchChartData } from "@/lib/stockApi";
+import { searchStock, fetchCurrentPrice } from "@/lib/stockApi";
 import { getUserId } from "@/lib/getUserId";
 
-export const maxDuration = 30;
 export const dynamic = "force-dynamic";
 
 async function requireUserId(): Promise<string> {
@@ -12,15 +11,8 @@ async function requireUserId(): Promise<string> {
   return id;
 }
 
-// 스파크라인용으로 종가 배열을 target 개수로 균등 다운샘플
-function downsample(arr: number[], target: number): number[] {
-  if (arr.length <= target) return arr;
-  const step = (arr.length - 1) / (target - 1);
-  const out: number[] = [];
-  for (let i = 0; i < target; i++) out.push(arr[Math.round(i * step)]);
-  return out;
-}
-
+// 현재가는 DB값을 그대로 반환(가벼움). 시세 갱신은 /api/holdings/refresh,
+// 차트(스파크라인)는 /api/holdings/sparklines 로 분리되어 있다.
 export async function GET() {
   const userId = await requireUserId();
   const holdings = await prisma.holding.findMany({
@@ -28,22 +20,7 @@ export async function GET() {
     orderBy: { updatedAt: "desc" },
     include: { vrStrategies: true },
   });
-
-  // 종목별 실제 차트(1개월)로 스파크라인 구성. 차트 실패 시 빈 배열.
-  const withSpark = await Promise.all(
-    holdings.map(async (h) => {
-      let spark: number[] = [];
-      try {
-        const chart = await fetchChartData(h.ticker, "1mo");
-        if (chart && chart.points.length > 1) {
-          spark = downsample(chart.points.map((p) => p.close), 16);
-        }
-      } catch {}
-      return { ...h, spark };
-    })
-  );
-
-  return NextResponse.json(withSpark);
+  return NextResponse.json(holdings);
 }
 
 export async function POST(req: NextRequest) {

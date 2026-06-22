@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { fetchCurrentPrice, fetchChartData } from "@/lib/stockApi";
+import { fetchCurrentPrice } from "@/lib/stockApi";
 import { getUserId } from "@/lib/getUserId";
-
-// 스파크라인용으로 종가 배열을 target 개수로 균등 다운샘플
-function downsample(arr: number[], target: number): number[] {
-  if (arr.length <= target) return arr;
-  const step = (arr.length - 1) / (target - 1);
-  const out: number[] = [];
-  for (let i = 0; i < target; i++) out.push(arr[Math.round(i * step)]);
-  return out;
-}
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
@@ -33,32 +24,19 @@ export async function GET() {
 
   const items = await prisma.watchlistItem.findMany({
     where: { userId },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
   });
 
-  // Yahoo에서 1개월 차트를 받아 현재가/등락률/스파크라인을 한 번에 구성.
-  // 차트 실패 시 현재가만이라도 조회.
-  const withData = await Promise.all(
+  // 현재가만 가볍게 조회(30초 주기). 등락률/차트는 /api/watchlist/charts 로 분리(60초).
+  const withPrice = await Promise.all(
     items.map(async (it) => {
-      try {
-        const chart = await fetchChartData(it.ticker, "1mo");
-        if (chart && chart.points.length > 1) {
-          const closes = chart.points.map((p) => p.close);
-          return {
-            ...it,
-            currentPrice: closes[closes.length - 1],
-            changePct: chart.changePct,
-            spark: downsample(closes, 16),
-          };
-        }
-      } catch {}
       let currentPrice: number | null = null;
       try { currentPrice = await fetchCurrentPrice(it.ticker); } catch {}
-      return { ...it, currentPrice, changePct: null, spark: [] as number[] };
+      return { ...it, currentPrice };
     })
   );
 
-  return NextResponse.json(withData);
+  return NextResponse.json(withPrice);
 }
 
 export async function POST(req: NextRequest) {
@@ -71,6 +49,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ticker, name required" }, { status: 400 });
   }
 
+  // 새 항목은 목록 맨 뒤로 (현재 최대 order + 1)
+  const last = await prisma.watchlistItem.findFirst({
+    where: { userId },
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+  const nextOrder = (last?.order ?? -1) + 1;
+
   const item = await prisma.watchlistItem.upsert({
     where: { userId_ticker: { userId, ticker: String(ticker) } },
     create: {
@@ -79,11 +65,35 @@ export async function POST(req: NextRequest) {
       name: String(name),
       market: market ? String(market) : null,
       currency: currencyForTicker(String(ticker)),
+      order: nextOrder,
     },
     update: { name: String(name), market: market ? String(market) : null },
   });
 
   return NextResponse.json(item, { status: 201 });
+}
+
+// 순서 변경: body { tickers: string[] } 순서대로 order 재할당
+export async function PATCH(req: NextRequest) {
+  let userId: string;
+  try { userId = await requireUserId(); }
+  catch { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
+
+  const { tickers } = await req.json();
+  if (!Array.isArray(tickers)) {
+    return NextResponse.json({ error: "tickers array required" }, { status: 400 });
+  }
+
+  await prisma.$transaction(
+    tickers.map((ticker: string, idx: number) =>
+      prisma.watchlistItem.updateMany({
+        where: { userId, ticker: String(ticker) },
+        data: { order: idx },
+      })
+    )
+  );
+
+  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(req: NextRequest) {
