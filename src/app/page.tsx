@@ -225,7 +225,8 @@ export default function DashboardPage() {
   const totalCost = holdings.reduce((s, h) => s + h.avgPrice * h.quantity, 0);
   const totalGain = totalAsset - totalCost;
   const totalGainPct = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
-  const realized = 0;
+  // 실현 수익은 매도 기록/외부 API가 있어야 계산 가능 → 현재 미지원이라 비활성화 (추후 복구)
+  // const realized = 0;
 
   const mockSparkline = (seed: number, trend: "up" | "down" = "up") => {
     const points: number[] = [];
@@ -306,7 +307,8 @@ export default function DashboardPage() {
         </CardShell>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      {/* 실현 수익 카드 비활성화로 그리드를 3열 → 2열로 조정 (복구 시 sm:grid-cols-3 으로 되돌리기) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <StatCard
           label="총 자산"
           unit="₩"
@@ -324,6 +326,7 @@ export default function DashboardPage() {
           subtext="누적 수익률"
           accent="blue"
         />
+        {/* 실현 수익: 매도 기록/실현손익 API 미지원으로 임시 비활성화 (추후 복구)
         <StatCard
           label="실현 수익"
           unit="₩"
@@ -333,6 +336,7 @@ export default function DashboardPage() {
           subtext="이번 달"
           accent="green"
         />
+        */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
