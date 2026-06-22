@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { searchStock, fetchCurrentPrice } from "@/lib/stockApi";
+import { searchStock, fetchCurrentPrice, fetchChartData } from "@/lib/stockApi";
 import { getUserId } from "@/lib/getUserId";
+
+export const maxDuration = 30;
+export const dynamic = "force-dynamic";
 
 async function requireUserId(): Promise<string> {
   const id = await getUserId();
   if (!id) throw new Error("Unauthorized");
   return id;
+}
+
+// 스파크라인용으로 종가 배열을 target 개수로 균등 다운샘플
+function downsample(arr: number[], target: number): number[] {
+  if (arr.length <= target) return arr;
+  const step = (arr.length - 1) / (target - 1);
+  const out: number[] = [];
+  for (let i = 0; i < target; i++) out.push(arr[Math.round(i * step)]);
+  return out;
 }
 
 export async function GET() {
@@ -16,7 +28,22 @@ export async function GET() {
     orderBy: { updatedAt: "desc" },
     include: { vrStrategies: true },
   });
-  return NextResponse.json(holdings);
+
+  // 종목별 실제 차트(1개월)로 스파크라인 구성. 차트 실패 시 빈 배열.
+  const withSpark = await Promise.all(
+    holdings.map(async (h) => {
+      let spark: number[] = [];
+      try {
+        const chart = await fetchChartData(h.ticker, "1mo");
+        if (chart && chart.points.length > 1) {
+          spark = downsample(chart.points.map((p) => p.close), 16);
+        }
+      } catch {}
+      return { ...h, spark };
+    })
+  );
+
+  return NextResponse.json(withSpark);
 }
 
 export async function POST(req: NextRequest) {

@@ -23,6 +23,7 @@ interface Holding {
   currentPrice: number | null;
   currency: string;
   broker: string;
+  spark?: number[];
 }
 
 interface WatchItem {
@@ -186,13 +187,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      fetchHoldings();
       refreshPrices();
       fetchWatchlist();
-      const interval = setInterval(refreshPrices, 30000);
+      // 30초마다 현재가/수익률/차트(보유·관심) 실시간 갱신
+      const interval = setInterval(() => {
+        refreshPrices();
+        fetchWatchlist();
+      }, 30000);
       return () => clearInterval(interval);
     }
-  }, [status, fetchHoldings, refreshPrices, fetchWatchlist]);
+  }, [status, refreshPrices, fetchWatchlist]);
 
   const addHolding = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,16 +256,6 @@ export default function DashboardPage() {
   const totalGainPct = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
   // 실현 수익은 매도 기록/외부 API가 있어야 계산 가능 → 현재 미지원이라 비활성화 (추후 복구)
   // const realized = 0;
-
-  const mockSparkline = (seed: number, trend: "up" | "down" = "up") => {
-    const points: number[] = [];
-    let v = 50;
-    for (let i = 0; i < 12; i++) {
-      v += ((seed * (i + 1)) % 7) - 3 + (trend === "up" ? 1.5 : -1.5);
-      points.push(Math.max(10, v));
-    }
-    return points;
-  };
 
   const rebalancePct = holdings.length > 0 ? 78 : 0;
   const nextRebalance = "2026.06.21";
@@ -391,12 +385,12 @@ export default function DashboardPage() {
                 <div className="w-4 shrink-0" />
               </div>
               <div className="divide-y divide-gray-100">
-                {holdings.map((h, idx) => {
+                {holdings.map((h) => {
                   const unit = sym(h.currency);
                   const hasPrice = h.currentPrice !== null;
                   const gainPct = hasPrice ? ((h.currentPrice! - h.avgPrice) / h.avgPrice) * 100 : 0;
                   const positive = gainPct >= 0;
-                  const spark = mockSparkline(idx + 1, positive ? "up" : "down");
+                  const spark = h.spark && h.spark.length > 1 ? h.spark : [];
                   return (
                     <div key={h.id} onContextMenu={(e) => handleContextMenu(e, h)}
                       className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
@@ -420,7 +414,11 @@ export default function DashboardPage() {
                         {hasPrice ? `${positive ? "+" : ""}${gainPct.toFixed(2)}%` : "—"}
                       </div>
                       <div className="hidden md:block w-20">
-                        <Sparkline points={spark} color={positive ? "#10b981" : "#ef4444"} />
+                        {spark.length > 1 ? (
+                          <Sparkline points={spark} color={positive ? "#10b981" : "#ef4444"} />
+                        ) : (
+                          <div className="h-8" />
+                        )}
                       </div>
                       <Link href={`/holdings/${h.id}`} className="text-gray-300 hover:text-gray-600 shrink-0">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
@@ -453,6 +451,7 @@ export default function DashboardPage() {
         </CardShell>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
       <CardShell
         title="관심종목"
         action={
@@ -466,7 +465,7 @@ export default function DashboardPage() {
             </button>
           </div>
         }
-        className="mb-6"
+        className="lg:col-span-2"
       >
         {watchlist.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-10">
@@ -537,6 +536,7 @@ export default function DashboardPage() {
           <ActivityItem type="rebalance" message="리밸런싱 완료" time="어제 16:10" />
         </div>
       </CardShell>
+      </div>
 
       {menu && (
         <ContextMenu
