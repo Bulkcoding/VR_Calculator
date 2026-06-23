@@ -1,5 +1,11 @@
 # VR 웹앱 커밋 로그
 
+## 2026-06-23 — feat: 표시통화 토글($/원) — 보유종목·관심종목 (worktree: ui-tweaks)
+- 보유종목/관심종목 카드 헤더에 $/원 토글 추가 (토스 스타일), localStorage 보존
+- /api/fx (Yahoo KRW=X)로 USD↔KRW 환율 조회, 30초 주기 갱신
+- 현재가/평균단가/총자산/총수익을 선택 통화로 환산 표시 (수익률·등락률은 불변)
+- CurrencyToggle 컴포넌트 + convertAmount/formatMoney 헬퍼
+
 ## 2026-06-22 — feat: 관심종목(Watchlist) 기능 추가
 - WatchlistItem 모델 추가 (보유종목과 별도 목록) + Neon DB 반영
 - 종목 검색 다중 결과 표시 후 선택 (searchStocks, /api/stocks/search)

@@ -13,6 +13,7 @@ import ContextMenu from "@/components/ContextMenu";
 import EditHoldingForm from "@/components/EditHoldingForm";
 import BrokerConnectionModal from "@/components/BrokerConnectionModal";
 import WatchlistAddModal from "@/components/WatchlistAddModal";
+import { CurrencyToggle, convertAmount, formatMoney, type DisplayCurrency } from "@/components/CurrencyToggle";
 
 interface Holding {
   id: string;
@@ -169,6 +170,23 @@ export default function DashboardPage() {
   const [holdingSparks, setHoldingSparks] = useState<Record<string, number[]>>({});
   const [watchCharts, setWatchCharts] = useState<Record<string, ChartInfo>>({});
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("KRW");
+  const [fxRate, setFxRate] = useState<number | null>(null);
+
+  // 표시 통화 선택을 localStorage에 보존
+  useEffect(() => {
+    const saved = localStorage.getItem("displayCurrency");
+    if (saved === "USD" || saved === "KRW") setDisplayCurrency(saved);
+  }, []);
+  const changeDisplayCurrency = (v: DisplayCurrency) => {
+    setDisplayCurrency(v);
+    localStorage.setItem("displayCurrency", v);
+  };
+
+  const fetchFx = useCallback(async () => {
+    const res = await fetch("/api/fx");
+    if (res.ok) { const d = await res.json(); setFxRate(d.usdkrw ?? null); }
+  }, []);
 
   const fetchHoldings = useCallback(async () => {
     const res = await fetch("/api/holdings");
@@ -255,15 +273,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      // 최초 1회: 현재가 + 차트 모두 로드
+      // 최초 1회: 현재가 + 차트 + 환율 로드
       refreshPrices();
       fetchWatchlist();
       fetchHoldingSparks();
       fetchWatchCharts();
-      // 현재가/수익률: 30초 주기
+      fetchFx();
+      // 현재가/수익률/환율: 30초 주기
       const priceInterval = setInterval(() => {
         refreshPrices();
         fetchWatchlist();
+        fetchFx();
       }, 30000);
       // 차트(스파크라인): 60초 주기
       const chartInterval = setInterval(() => {
@@ -275,7 +295,7 @@ export default function DashboardPage() {
         clearInterval(chartInterval);
       };
     }
-  }, [status, refreshPrices, fetchWatchlist, fetchHoldingSparks, fetchWatchCharts]);
+  }, [status, refreshPrices, fetchWatchlist, fetchHoldingSparks, fetchWatchCharts, fetchFx]);
 
   const addHolding = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -327,10 +347,17 @@ export default function DashboardPage() {
     return <LoginView onRegister={() => setAuthView("register")} />;
   }
 
-  const sym = (c: string) => (c === "USD" ? "$" : "₩");
+  const dispSym = displayCurrency === "USD" ? "$" : "₩";
+  // 표시 통화로 환산하여 합산 (환율 없으면 교차통화 항목은 제외)
   const hasPriceHolding = holdings.filter((h) => h.currentPrice !== null);
-  const totalAsset = hasPriceHolding.reduce((s, h) => s + (h.currentPrice! * h.quantity), 0);
-  const totalCost = holdings.reduce((s, h) => s + h.avgPrice * h.quantity, 0);
+  const totalAsset = hasPriceHolding.reduce((s, h) => {
+    const v = convertAmount(h.currentPrice! * h.quantity, h.currency, displayCurrency, fxRate);
+    return v == null ? s : s + v;
+  }, 0);
+  const totalCost = holdings.reduce((s, h) => {
+    const v = convertAmount(h.avgPrice * h.quantity, h.currency, displayCurrency, fxRate);
+    return v == null ? s : s + v;
+  }, 0);
   const totalGain = totalAsset - totalCost;
   const totalGainPct = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
   // 실현 수익은 매도 기록/외부 API가 있어야 계산 가능 → 현재 미지원이라 비활성화 (추후 복구)
@@ -409,16 +436,16 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <StatCard
           label="총 자산"
-          unit="₩"
-          value={totalAsset.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          unit={dispSym}
+          value={totalAsset.toLocaleString(undefined, { maximumFractionDigits: displayCurrency === "USD" ? 2 : 0 })}
           change={`${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(2)}%`}
           changePositive={totalGainPct >= 0}
           subtext="전일 대비"
         />
         <StatCard
           label="총 수익"
-          unit="₩"
-          value={Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          unit={dispSym}
+          value={Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: displayCurrency === "USD" ? 2 : 0 })}
           change={`${totalGain >= 0 ? "+" : ""}${totalGainPct.toFixed(2)}%`}
           changePositive={totalGain >= 0}
           subtext="누적 수익률"
@@ -441,10 +468,13 @@ export default function DashboardPage() {
         <CardShell
           title="보유 종목"
           action={
-            <button onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition">
-              + 종목 추가
-            </button>
+            <div className="flex items-center gap-2">
+              <CurrencyToggle value={displayCurrency} onChange={changeDisplayCurrency} />
+              <button onClick={() => setShowForm(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition">
+                + 종목 추가
+              </button>
+            </div>
           }
           className="lg:col-span-2"
         >
@@ -465,10 +495,11 @@ export default function DashboardPage() {
               </div>
               <div className="divide-y divide-gray-100">
                 {holdings.map((h) => {
-                  const unit = sym(h.currency);
                   const hasPrice = h.currentPrice !== null;
                   const gainPct = hasPrice ? ((h.currentPrice! - h.avgPrice) / h.avgPrice) * 100 : 0;
                   const positive = gainPct >= 0;
+                  const dispAvg = convertAmount(h.avgPrice, h.currency, displayCurrency, fxRate);
+                  const dispCur = hasPrice ? convertAmount(h.currentPrice!, h.currency, displayCurrency, fxRate) : null;
                   const spark = holdingSparks[h.id] && holdingSparks[h.id].length > 1 ? holdingSparks[h.id] : [];
                   return (
                     <div key={h.id} onContextMenu={(e) => handleContextMenu(e, h)}
@@ -484,10 +515,10 @@ export default function DashboardPage() {
                         {h.quantity.toLocaleString(undefined, { maximumFractionDigits: 2 })}주
                       </div>
                       <div className="hidden sm:block w-20 text-right text-sm text-gray-700">
-                        {unit}{h.avgPrice.toLocaleString()}
+                        {formatMoney(dispAvg, displayCurrency)}
                       </div>
                       <div className="w-24 text-right text-sm font-semibold text-gray-900">
-                        {unit}{hasPrice ? h.currentPrice!.toLocaleString() : "—"}
+                        {formatMoney(dispCur, displayCurrency)}
                       </div>
                       <div className={`w-14 text-right text-xs font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
                         {hasPrice ? `${positive ? "+" : ""}${gainPct.toFixed(2)}%` : "—"}
@@ -535,6 +566,7 @@ export default function DashboardPage() {
         title="관심종목"
         action={
           <div className="flex items-center gap-2">
+            <CurrencyToggle value={displayCurrency} onChange={changeDisplayCurrency} />
             <Link href="/watchlist" className="text-xs text-blue-600 hover:underline font-medium">전체보기</Link>
             <button
               onClick={() => setShowWatchAdd(true)}
@@ -565,11 +597,11 @@ export default function DashboardPage() {
             </div>
             <div className="divide-y divide-gray-100">
               {watchlist.map((w, i) => {
-                const unit = w.currency === "USD" ? "$" : "₩";
                 const chart = watchCharts[w.ticker];
                 const changePct = chart?.changePct ?? null;
                 const spark = chart?.spark ?? [];
                 const positive = (changePct ?? 0) >= 0;
+                const dispCur = w.currentPrice != null ? convertAmount(w.currentPrice, w.currency, displayCurrency, fxRate) : null;
                 return (
                   <div
                     key={w.id}
@@ -594,7 +626,7 @@ export default function DashboardPage() {
                       <div className="text-xs text-gray-400 truncate">{w.ticker}{w.market ? ` · ${w.market}` : ""}</div>
                     </div>
                     <div className="w-24 text-right text-sm font-semibold text-gray-900">
-                      {w.currentPrice != null ? `${unit}${w.currentPrice.toLocaleString()}` : "—"}
+                      {formatMoney(dispCur, displayCurrency)}
                     </div>
                     <div className={`w-16 text-right text-xs font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
                       {changePct != null ? `${positive ? "+" : ""}${changePct.toFixed(2)}%` : "—"}
