@@ -27,7 +27,7 @@ export async function GET() {
   const entries = await Promise.all(
     items.map(async (it) => {
       try {
-        const chart = await fetchChartData(it.ticker, "1mo");
+        const chart = await fetchChartData(it.ticker, "1d");
         if (chart && chart.points.length > 1) {
           return [
             it.ticker,
