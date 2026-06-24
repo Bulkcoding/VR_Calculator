@@ -8,7 +8,7 @@ import BrokerConnectionModal from "@/components/BrokerConnectionModal";
 
 const ALL_BROKERS = [
   { id: "kis", name: "한국투자증권", shortName: "KIS", color: "bg-blue-600", supportsImport: true },
-  { id: "toss", name: "토스증권", shortName: "TS", color: "bg-blue-500", supportsImport: false },
+  { id: "toss", name: "토스증권", shortName: "TS", color: "bg-blue-500", supportsImport: true },
   { id: "samsung", name: "삼성증권", shortName: "SS", color: "bg-orange-500", supportsImport: false },
   { id: "kb", name: "KB증권", shortName: "KB", color: "bg-yellow-500", supportsImport: false },
   { id: "mirae", name: "미래에셋증권", shortName: "MA", color: "bg-teal-600", supportsImport: false },
@@ -53,10 +53,16 @@ export default function BrokerConnectionsPage() {
   };
 
   const handleImport = async (brokerId: string) => {
-    if (brokerId !== "kis") return;
+    if (brokerId !== "kis" && brokerId !== "toss") return;
     setImporting(brokerId);
-    await fetch("/api/brokers/kis/import", { method: "POST" });
+    const res = await fetch(`/api/brokers/${brokerId}/import`, { method: "POST" });
+    const data = await res.json().catch(() => ({}));
     setImporting(null);
+    if (!res.ok) {
+      alert(data.error || "보유종목 불러오기에 실패했습니다.");
+      return;
+    }
+    alert(`불러오기 완료: 추가 ${data.added ?? 0}건 · 갱신 ${data.updated ?? 0}건`);
   };
 
   const openModal = (brokerId: string) => setModal({ open: true, broker: brokerId });
