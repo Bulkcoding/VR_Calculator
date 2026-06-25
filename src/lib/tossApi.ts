@@ -1,5 +1,24 @@
 const TOSS_BASE_URL = "https://openapi.tossinvest.com";
 
+// 토스는 등록된 IP에서만 호출을 허용한다. Vercel은 출구 IP가 고정이 아니므로,
+// TOSS_PROXY_URL(고정 IP 프록시)이 설정되면 그 프록시를 경유한다. 없으면 직접 호출(로컬).
+let dispatcherPromise: Promise<unknown> | null | undefined;
+async function getDispatcher(): Promise<unknown> {
+  if (dispatcherPromise !== undefined) return dispatcherPromise;
+  const proxy = process.env.TOSS_PROXY_URL;
+  if (!proxy) {
+    dispatcherPromise = null;
+    return null;
+  }
+  dispatcherPromise = import("undici").then((u) => new u.ProxyAgent(proxy));
+  return dispatcherPromise;
+}
+
+async function tossFetch(url: string, init?: RequestInit): Promise<Response> {
+  const dispatcher = await getDispatcher();
+  return fetch(url, dispatcher ? ({ ...init, dispatcher } as RequestInit) : init);
+}
+
 interface TossToken {
   access_token: string;
   token_type: string;
@@ -30,7 +49,7 @@ async function getToken(clientId: string, clientSecret: string): Promise<TossTok
     client_id: clientId,
     client_secret: clientSecret,
   });
-  const res = await fetch(`${TOSS_BASE_URL}/oauth2/token`, {
+  const res = await tossFetch(`${TOSS_BASE_URL}/oauth2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
@@ -50,7 +69,7 @@ interface TossAccount {
 }
 
 async function fetchAccounts(token: TossToken): Promise<TossAccount[]> {
-  const res = await fetch(`${TOSS_BASE_URL}/api/v1/accounts`, {
+  const res = await tossFetch(`${TOSS_BASE_URL}/api/v1/accounts`, {
     headers: { authorization: `${token.token_type} ${token.access_token}` },
   });
   const data = await res.json();
@@ -59,7 +78,7 @@ async function fetchAccounts(token: TossToken): Promise<TossAccount[]> {
 }
 
 async function fetchHoldingsForAccount(token: TossToken, accountSeq: number): Promise<TossHolding[]> {
-  const res = await fetch(`${TOSS_BASE_URL}/api/v1/holdings`, {
+  const res = await tossFetch(`${TOSS_BASE_URL}/api/v1/holdings`, {
     headers: {
       authorization: `${token.token_type} ${token.access_token}`,
       "X-Tossinvest-Account": String(accountSeq),
