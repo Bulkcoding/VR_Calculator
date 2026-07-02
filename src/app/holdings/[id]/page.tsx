@@ -95,12 +95,23 @@ function ScheduleTable({
         {rows.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">{isBuy ? "Pool 부족 (단위를 줄여보세요)" : "매도 가능 수량 없음"}</p>
         ) : (
-          displayRows.map((row) => (
+          displayRows
+            .filter((row) => !(type === "sell" && row.qty <= 0))
+            .map((row) => (
             <div key={row.step} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
               <div className={`text-xs font-semibold w-14 ${accentText}`}>
                 {row.step}차 {isBuy ? "매수" : "매도"}
               </div>
-              <div className="flex items-center gap-0.5 shrink-0">
+              <div className={`text-sm font-bold w-28 ${accentText}`}>
+                {symbol}{row.price.toLocaleString()}
+              </div>
+              <div className="flex-1">
+                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${accentBar}`} style={{ width: `${Math.min(100, (row.step / Math.max(rows.length, 1)) * 100)}%` }} />
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="text-[10px] text-gray-400">수량</span>
                 <input
                   type="number"
                   min="1"
@@ -112,21 +123,12 @@ function ScheduleTable({
                     const num = parseInt(v, 10);
                     if (!isNaN(num) && num >= 1) onUnitChange(row.step, num);
                   }}
-                  className="w-14 px-2 py-1 border border-gray-200 rounded text-xs text-center bg-white"
-                  title="매도/매수 단위 (주)"
+                  className="w-16 px-2 py-1 border border-gray-200 rounded text-xs text-center bg-white"
+                  title="매수/매도 수량 (주)"
                 />
                 <span className="text-[10px] text-gray-400">주</span>
               </div>
-              <div className={`text-sm font-bold w-24 ${accentText}`} title="자동 계산된 1주 단가 (maxBand / 매도전수량)">
-                <span className="text-[10px] text-gray-400 font-normal mr-0.5">@</span>{symbol}{row.price.toLocaleString()}
-              </div>
-              <div className="flex-1">
-                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${accentBar}`} style={{ width: `${Math.min(100, (row.step / Math.max(rows.length, 1)) * 100)}%` }} />
-                </div>
-              </div>
-              <div className="text-right text-xs">
-                <div className="font-semibold text-gray-900">{row.qty} 주</div>
+              <div className="text-right text-xs w-20">
                 <div className="text-gray-400">Pool {symbol}{row.pool.toLocaleString()}</div>
               </div>
             </div>
