@@ -62,12 +62,13 @@ const defaultParams: Omit<VrParams, "bandPct"> & { bandPreset: BandPreset } = {
 };
 
 function ScheduleTable({
-  rows, type, symbol, onUnitChange,
+  rows, type, symbol, onUnitChange, capped,
 }: {
   rows: { step: number; unit: number; qty: number; price: number; pool: number }[];
   type: "buy" | "sell";
   symbol: string;
   onUnitChange: (step: number, unit: number) => void;
+  capped?: boolean;
 }) {
   const isBuy = type === "buy";
   const [showAll, setShowAll] = useState(false);
@@ -95,7 +96,13 @@ function ScheduleTable({
         {rows.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">{isBuy ? "Pool 부족" : "매도 가능 수량 없음"}</p>
         ) : (
-          displayRows
+          <>
+          {capped && isBuy && (
+            <p className="text-[11px] text-gray-400 text-center pb-2">
+              현재 사이클 pool의 75% 근처까지만 사용할 수 있도록 매수 개수를 제한함.
+            </p>
+          )}
+          {displayRows
             .filter((row) => !(type === "sell" && row.qty <= 0))
             .map((row) => (
             <div key={row.step} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
@@ -133,6 +140,7 @@ function ScheduleTable({
               </div>
             </div>
           ))
+          </>
         )}
       </div>
       {rows.length > 8 && (
@@ -591,6 +599,7 @@ export default function VrEditorPage() {
           rows={result?.buyTable || []}
           type="buy"
           symbol="$"
+          capped={result?.buyCapped}
           onUnitChange={(step, unit) => {
             const next = [...buyUnits];
             next[step - 1] = unit;

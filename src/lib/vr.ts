@@ -29,6 +29,7 @@ export interface VrResult {
   buyTable: PriceRow[];
   sellTable: PriceRow[];
   poolCap: number;
+  buyCapped: boolean;
 }
 
 export interface CycleContext {
@@ -60,13 +61,15 @@ export function calculateVr(
   let buyPool = pool;
   let buyQty = currentQty;
   let cumAmount = 0;
+  let buyCapped = false;
   for (let i = 0; i < maxRows; i++) {
     const unit = Math.floor(buyUnits[i] ?? 1);
     if (buyQty <= 0 || buyPool <= 0) break;
     const price = minBand / buyQty;
     if (unit > 0) {
       const cost = price * unit;
-      if (cost > buyPool || cumAmount + cost > poolCap) break;
+      if (cost > buyPool) break;
+      if (cumAmount + cost > poolCap) { buyCapped = true; break; }
       buyQty += unit;
       buyPool -= cost;
       cumAmount += cost;
@@ -114,6 +117,7 @@ export function calculateVr(
     buyTable,
     sellTable,
     poolCap: Number(poolCap.toFixed(2)),
+    buyCapped,
   };
 }
 
