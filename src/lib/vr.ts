@@ -66,7 +66,7 @@ export function calculateVr(
     const price = minBand / buyQty;
     if (unit > 0) {
       const cost = price * unit;
-      if (cost > buyPool || cost > poolCap) break;
+      if (cost > buyPool || cumAmount + cost > poolCap) break;
       buyQty += unit;
       buyPool -= cost;
       cumAmount += cost;

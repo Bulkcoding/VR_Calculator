@@ -93,7 +93,7 @@ function ScheduleTable({
 
       <div className="space-y-1">
         {rows.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">{isBuy ? "Pool 부족 (단위를 줄여보세요)" : "매도 가능 수량 없음"}</p>
+          <p className="text-sm text-gray-400 text-center py-8">{isBuy ? "Pool 부족" : "매도 가능 수량 없음"}</p>
         ) : (
           displayRows
             .filter((row) => !(type === "sell" && row.qty <= 0))
