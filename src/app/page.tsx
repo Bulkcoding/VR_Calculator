@@ -13,6 +13,7 @@ import ContextMenu from "@/components/ContextMenu";
 import EditHoldingForm from "@/components/EditHoldingForm";
 import BrokerConnectionModal from "@/components/BrokerConnectionModal";
 import WatchlistAddModal from "@/components/WatchlistAddModal";
+import MarketStatusBadge from "@/components/MarketStatusBadge";
 import { CurrencyToggle, convertAmount, formatMoney, type DisplayCurrency } from "@/components/CurrencyToggle";
 
 
@@ -451,6 +452,10 @@ const formatHoldingBroker = (broker: string) => {
         </div>
       }
     >
+      <div className="mb-4">
+        <MarketStatusBadge />
+      </div>
+
       <div className="mb-6">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">안녕하세요, {session?.user?.name || "원석"}님 👋</h2>
         <p className="text-sm text-gray-500 mt-1">오늘도 현명한 투자를 응원합니다.</p>
