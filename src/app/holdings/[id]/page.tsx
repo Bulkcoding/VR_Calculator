@@ -96,13 +96,7 @@ function ScheduleTable({
         {rows.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">{isBuy ? "Pool 부족" : "매도 가능 수량 없음"}</p>
         ) : (
-          <>
-          {capped && isBuy && (
-            <p className="text-[11px] text-gray-400 text-center pb-2">
-              현재 사이클 pool의 75% 근처까지만 사용할 수 있도록 매수 개수를 제한함.
-            </p>
-          )}
-          {displayRows
+          displayRows
             .filter((row) => !(type === "sell" && row.qty <= 0))
             .map((row) => (
             <div key={row.step} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
@@ -140,7 +134,11 @@ function ScheduleTable({
               </div>
             </div>
           ))
-          </>
+        )}
+        {capped && isBuy && rows.length > 0 && (
+          <p className="text-[11px] text-gray-400 text-center pt-1">
+            현재 사이클 pool의 75% 근처까지만 사용할 수 있도록 매수 개수를 제한함.
+          </p>
         )}
       </div>
       {rows.length > 8 && (
