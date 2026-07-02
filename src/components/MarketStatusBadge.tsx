@@ -43,14 +43,20 @@ export default function MarketStatusBadge() {
       // 한국 정규장: 09:00 ~ 15:30 KST
       const krOpen = inRange(h, m, 9, 15.5);
 
-      // 해외 데이마켓: 09:00 ~ 17:00 ET
-      const etOffset = dst ? 13 : 14; // KST - ET
+      const etOffset = dst ? 13 : 14;
       const etH = (h - etOffset + 24) % 24;
-      const usOpen = inRange(etH, m, 9, 17);
+
+      const usSessions = [
+        { label: "해외 프리마켓",   time: "04:00 ~ 09:30", open: 4, close: 9.5 },
+        { label: "해외 정규장",     time: "09:30 ~ 16:00", open: 9.5, close: 16 },
+        { label: "해외 애프터마켓", time: "16:00 ~ 20:00", open: 16, close: 20 },
+      ];
+      const active = usSessions.find((s) => inRange(etH, m, s.open, s.close));
+      const usLine = active ?? { label: "해외 장종료", time: "—", isOpen: false };
 
       setLines([
         { label: "국내 정규장", time: "09:00 ~ 15:30", isOpen: krOpen },
-        { label: "해외 데이마켓", time: "09:00 ~ 17:00", isOpen: usOpen },
+        { label: usLine.label, time: usLine.time, isOpen: !!active },
       ]);
     };
 
