@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { calculateVr, BAND_PRESETS, MODE_LABELS, type BandPreset, type VrMode, type VrParams, type VrResult } from "@/lib/vr";
@@ -73,11 +73,18 @@ function ScheduleTable({
   const isBuy = type === "buy";
   const [showAll, setShowAll] = useState(false);
   const [inputStr, setInputStr] = useState<Record<number, string>>({});
+  const lastValidRef = useRef(rows);
+
+  if (rows.length > 0) {
+    lastValidRef.current = rows;
+  }
 
   const accentText = isBuy ? "text-green-600" : "text-red-500";
   const accentBar = isBuy ? "bg-green-500" : "bg-red-500";
 
-  const displayRows = showAll ? rows : rows.slice(0, 8);
+  const hasInvalidInput = rows.length === 0 && lastValidRef.current.length > 0;
+  const activeRows = hasInvalidInput ? lastValidRef.current : rows;
+  const displayRows = showAll ? activeRows : activeRows.slice(0, 8);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-5">
@@ -93,10 +100,16 @@ function ScheduleTable({
       </div>
 
       <div className="space-y-1">
-        {rows.length === 0 ? (
+        {activeRows.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">{isBuy ? "Pool 부족" : "매도 가능 수량 없음"}</p>
         ) : (
-          displayRows
+          <>
+          {hasInvalidInput && (
+            <p className="text-[11px] text-amber-600 text-center pb-1">
+              현재 입력값으로 매수/매도표를 생성할 수 없습니다. 수량을 줄여보세요.
+            </p>
+          )}
+          {displayRows
             .filter((row) => !(type === "sell" && row.qty <= 0))
             .map((row) => (
             <div key={row.step} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
@@ -125,7 +138,7 @@ function ScheduleTable({
               </div>
               <div className="flex-1">
                 <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${accentBar}`} style={{ width: `${Math.min(100, (row.step / Math.max(rows.length, 1)) * 100)}%` }} />
+                  <div className={`h-full rounded-full ${accentBar}`} style={{ width: `${Math.min(100, (row.step / Math.max(activeRows.length, 1)) * 100)}%` }} />
                 </div>
               </div>
               <div className="text-right text-xs">
@@ -133,7 +146,8 @@ function ScheduleTable({
                 <div className="text-gray-400">Pool {symbol}{row.pool.toLocaleString()}</div>
               </div>
             </div>
-          ))
+          ))}
+          </>
         )}
         {capped && isBuy && rows.length > 0 && (
           <p className="text-[11px] text-gray-400 text-center pt-1">
@@ -141,12 +155,12 @@ function ScheduleTable({
           </p>
         )}
       </div>
-      {rows.length > 8 && (
+      {activeRows.length > 8 && (
         <button
           onClick={() => setShowAll(!showAll)}
           className={`w-full mt-3 text-xs font-semibold ${accentText}`}
         >
-          {showAll ? "접기 ∧" : `전체 ${rows.length}개 구간 보기 ∨`}
+          {showAll ? "접기 ∧" : `전체 ${activeRows.length}개 구간 보기 ∨`}
         </button>
       )}
     </div>
