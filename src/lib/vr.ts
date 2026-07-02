@@ -62,7 +62,7 @@ export function calculateVr(
   let cumAmount = 0;
   for (let i = 0; i < maxRows; i++) {
     const unit = Math.floor(buyUnits[i] ?? 1);
-    if (buyQty <= 0) break;
+    if (buyQty <= 0 || buyPool <= 0) break;
     const price = minBand / buyQty;
     if (unit > 0) {
       const cost = price * unit;
