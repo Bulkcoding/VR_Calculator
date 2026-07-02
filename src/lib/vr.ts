@@ -61,14 +61,16 @@ export function calculateVr(
   let buyQty = currentQty;
   let cumAmount = 0;
   for (let i = 0; i < maxRows; i++) {
-    const unit = Math.max(1, Math.floor(buyUnits[i] ?? 1));
+    const unit = Math.floor(buyUnits[i] ?? 1);
     if (buyQty <= 0) break;
     const price = minBand / buyQty;
-    const cost = price * unit;
-    if (cost > buyPool || cost > poolCap) break;
-    buyQty += unit;
-    buyPool -= cost;
-    cumAmount += cost;
+    if (unit > 0) {
+      const cost = price * unit;
+      if (cost > buyPool || cost > poolCap) break;
+      buyQty += unit;
+      buyPool -= cost;
+      cumAmount += cost;
+    }
     buyTable.push({
       step: i + 1,
       unit,
@@ -84,16 +86,18 @@ export function calculateVr(
   let sellQty = currentQty;
   let sCumAmount = 0;
   for (let i = 0; i < maxRows; i++) {
-    const unit = Math.max(1, Math.floor(sellUnits[i] ?? 1));
+    const unit = Math.floor(sellUnits[i] ?? 1);
     if (sellQty <= 0) break;
     const price = maxBand / sellQty;
     if (price < 1) break;
-    if (sellQty - unit < 1) break;
-    const proceeds = price * unit;
-    sellQty -= unit;
-    if (sellQty < 0) sellQty = 0;
-    sellPool += proceeds;
-    sCumAmount += proceeds;
+    if (unit > 0) {
+      if (sellQty - unit < 1) break;
+      const proceeds = price * unit;
+      sellQty -= unit;
+      if (sellQty < 0) sellQty = 0;
+      sellPool += proceeds;
+      sCumAmount += proceeds;
+    }
     sellTable.push({
       step: i + 1,
       unit,
