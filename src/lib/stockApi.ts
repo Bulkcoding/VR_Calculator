@@ -72,13 +72,22 @@ export async function fetchCurrentPrice(ticker: string): Promise<number | null> 
 
 async function tryYahooCurrent(symbol: string): Promise<number | null> {
   try {
-    const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d`, {
-      headers: { "User-Agent": "Mozilla/5.0" },
-      signal: AbortSignal.timeout(4000),
-      cache: "no-store",
-    });
+    // 시간외(프리/애프터마켓) 포함 1분봉의 마지막 체결가를 우선 사용 → 정규장 외에도 현재가가 갱신됨
+    const res = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d&includePrePost=true`,
+      {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: AbortSignal.timeout(4000),
+        cache: "no-store",
+      }
+    );
     const data = await res.json();
-    const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    const result = data?.chart?.result?.[0];
+    const closes: (number | null)[] = result?.indicators?.quote?.[0]?.close || [];
+    for (let i = closes.length - 1; i >= 0; i--) {
+      if (closes[i] != null) return closes[i] as number;
+    }
+    const price = result?.meta?.regularMarketPrice;
     if (price != null) return price;
   } catch {}
   return null;

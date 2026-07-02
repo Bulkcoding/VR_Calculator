@@ -606,7 +606,7 @@ export default function DashboardPage() {
                   <div
                     key={w.id}
                     data-watch-index={i}
-                    className={`flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition ${dragIndex === i ? "bg-blue-50 opacity-70" : ""}`}
+                    className={`flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition select-none ${dragIndex === i ? "bg-blue-50 opacity-70" : ""}`}
                   >
                     <span
                       className="w-4 shrink-0 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 touch-none"
