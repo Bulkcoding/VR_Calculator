@@ -102,6 +102,23 @@ function ScheduleTable({
               <div className={`text-xs font-semibold w-14 ${accentText}`}>
                 {row.step}차 {isBuy ? "매수" : "매도"}
               </div>
+              <div className="flex items-center gap-0.5 shrink-0">
+                <input
+                  type="number"
+                  min="0"
+                  value={inputStr[row.step] ?? row.unit}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setInputStr((prev) => ({ ...prev, [row.step]: v }));
+                    if (v === "" || v === "-") return;
+                    const num = parseInt(v, 10);
+                    if (!isNaN(num)) onUnitChange(row.step, Math.max(0, num));
+                  }}
+                  className="w-14 px-2 py-1 border border-gray-200 rounded text-xs text-center bg-white"
+                  title="매수/매도 수량 (주)"
+                />
+                <span className="text-[10px] text-gray-400">주</span>
+              </div>
               <div className={`text-sm font-bold w-28 ${accentText}`}>
                 {symbol}{row.price.toLocaleString()}
               </div>
@@ -110,25 +127,8 @@ function ScheduleTable({
                   <div className={`h-full rounded-full ${accentBar}`} style={{ width: `${Math.min(100, (row.step / Math.max(rows.length, 1)) * 100)}%` }} />
                 </div>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <span className="text-[10px] text-gray-400">수량</span>
-                <input
-                  type="number"
-                  min="1"
-                  value={inputStr[row.step] ?? row.unit}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setInputStr((prev) => ({ ...prev, [row.step]: v }));
-                    if (v === "" || v === "-") return;
-                    const num = parseInt(v, 10);
-                    if (!isNaN(num) && num >= 1) onUnitChange(row.step, num);
-                  }}
-                  className="w-16 px-2 py-1 border border-gray-200 rounded text-xs text-center bg-white"
-                  title="매수/매도 수량 (주)"
-                />
-                <span className="text-[10px] text-gray-400">주</span>
-              </div>
-              <div className="text-right text-xs w-20">
+              <div className="text-right text-xs">
+                <div className="font-semibold text-gray-900">{row.qty}주</div>
                 <div className="text-gray-400">Pool {symbol}{row.pool.toLocaleString()}</div>
               </div>
             </div>
