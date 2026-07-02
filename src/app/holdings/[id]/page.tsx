@@ -276,8 +276,12 @@ export default function VrEditorPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
   const updateNumber = (key: keyof typeof params, value: string) => {
+    if (value === "" || value === "-") {
+      setParams((prev) => ({ ...prev, [key]: 0 as any }));
+      return;
+    }
     const num = parseFloat(value);
-    if (!isNaN(num)) updateParam(key, num as any);
+    if (!isNaN(num)) setParams((prev) => ({ ...prev, [key]: num as any }));
   };
 
   const save = async () => {
