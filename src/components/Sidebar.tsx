@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
 
 const navItems = [
   { href: "/", label: "대시보드", icon: "home", disabled: false },
@@ -14,7 +13,7 @@ const navItems = [
   { href: "/notifications", label: "알림", icon: "bell", disabled: true },
   { href: "/broker-connections", label: "증권사 연동", icon: "shield", disabled: false },
   { href: "/api-settings", label: "API 연동", icon: "link", disabled: true },
-  { href: "/settings", label: "설정", icon: "cog", disabled: true },
+  { href: "/settings", label: "설정", icon: "cog", disabled: false },
 ];
 
 function Icon({ name, className = "w-5 h-5" }: { name: string; className?: string }) {
@@ -158,16 +157,6 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
       </nav>
 
       <div className="p-3 space-y-3">
-        <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Icon name="star" className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-semibold text-gray-900">Premium</span>
-          </div>
-          <p className="text-xs text-gray-500 mb-3">고급 기능을 사용해보세요</p>
-          <button className="w-full px-3 py-1.5 rounded-lg bg-white border border-blue-200 text-xs font-medium text-blue-600 hover:bg-blue-50 transition">
-            업그레이드
-          </button>
-        </div>
 
         <button
           onClick={() => signOut()}
@@ -178,7 +167,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
           </div>
           <div className="flex-1 text-left">
             <div className="text-sm font-semibold text-gray-900">{session?.user?.name || "원석님"}</div>
-            <div className="text-[10px] text-gray-400">Premium</div>
+            <div className="text-[10px] text-gray-400">{session?.user?.email || ""}</div>
           </div>
           <Icon name="arrow-left" className="w-4 h-4 text-gray-300 rotate-180" />
         </button>

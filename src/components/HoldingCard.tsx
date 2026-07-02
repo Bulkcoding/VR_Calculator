@@ -11,35 +11,48 @@ interface HoldingCardProps {
   broker: string;
 }
 
-const currencySymbol = (c: string) => (c === "USD" ? "$" : "₩");
+const currencySymbol = (c: string) => (c === "USD" ? "$" : "원");
 
 const brokerLabel: Record<string, string> = {
   kis: "한투",
   kiwoom: "키움",
   toss: "토스",
+  "toss-screenshot": "토스 캡처",
+  multi: "통합",
+  other: "기타",
   kakao: "카카오",
   samsung: "삼성",
   mirae: "미래에셋",
   daishin: "대신",
   nh: "NH투자",
   shinhan: "신한",
+  hana: "하나",
   kb: "KB증권",
+  yuanta: "유안타",
+  eugene: "유진",
   ls: "LS증권",
   csv: "CSV",
   manual: "",
 };
 
+
 const brokerColors: Record<string, string> = {
   kis: "bg-blue-100 text-blue-700",
   kiwoom: "bg-red-100 text-red-700",
   toss: "bg-yellow-100 text-yellow-800",
+  "toss-screenshot": "bg-yellow-50 text-yellow-700",
+  multi: "bg-emerald-100 text-emerald-700",
+  other: "bg-gray-100 text-gray-700",
   kakao: "bg-yellow-100 text-yellow-800",
   samsung: "bg-blue-100 text-blue-700",
   mirae: "bg-purple-100 text-purple-700",
   daishin: "bg-green-100 text-green-700",
   nh: "bg-indigo-100 text-indigo-700",
   shinhan: "bg-cyan-100 text-cyan-700",
+  hana: "bg-emerald-100 text-emerald-700",
   kb: "bg-orange-100 text-orange-700",
+  yuanta: "bg-red-100 text-red-700",
+  eugene: "bg-violet-100 text-violet-700",
   ls: "bg-pink-100 text-pink-700",
   csv: "bg-gray-100 text-gray-600",
   manual: "",

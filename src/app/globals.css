@@ -4,12 +4,56 @@
   --background: #f5f7fb;
   --foreground: #111827;
   --card: #ffffff;
+  --surface-muted: #f8fafc;
+  --surface-subtle: #f1f5f9;
   --border: #e5e7eb;
+  --border-subtle: #edf2f7;
+  --border-strong: #d1d5db;
   --muted: #6b7280;
+  --muted-strong: #374151;
+  --muted-soft: #9ca3af;
+  --muted-faint: #d1d5db;
   --accent-blue: #3b82f6;
   --accent-indigo: #6366f1;
+  --accent-blue-strong: #2563eb;
+  --accent-blue-soft: #dbeafe;
+  --accent-blue-soft-strong: #bfdbfe;
   --accent-green: #10b981;
+  --accent-green-soft: #d1fae5;
   --accent-red: #ef4444;
+  --accent-red-soft: #fee2e2;
+  --accent-yellow: #f59e0b;
+  --accent-yellow-soft: #fef3c7;
+  --gradient-from: #3b82f6;
+  --gradient-to: #6366f1;
+}
+
+html[data-theme="theme-2"] {
+  --background: #09111d;
+  --foreground: #f4f7fb;
+  --card: #121c2a;
+  --surface-muted: #0d1117;
+  --surface-subtle: #182334;
+  --border: rgba(148, 163, 184, 0.16);
+  --border-subtle: rgba(148, 163, 184, 0.09);
+  --border-strong: rgba(148, 163, 184, 0.28);
+  --muted: #a0abc0;
+  --muted-strong: #d9e1f0;
+  --muted-soft: #7f8da5;
+  --muted-faint: #56647d;
+  --accent-blue: #6546ff;
+  --accent-indigo: #7b61ff;
+  --accent-blue-strong: #7b61ff;
+  --accent-blue-soft: rgba(101, 70, 255, 0.16);
+  --accent-blue-soft-strong: rgba(101, 70, 255, 0.28);
+  --accent-green: #47e3d5;
+  --accent-green-soft: rgba(71, 227, 213, 0.16);
+  --accent-red: #ff7b7b;
+  --accent-red-soft: rgba(255, 123, 123, 0.16);
+  --accent-yellow: #f8c26a;
+  --accent-yellow-soft: rgba(248, 194, 106, 0.16);
+  --gradient-from: #6546ff;
+  --gradient-to: #47e3d5;
 }
 
 @theme inline {
@@ -24,6 +68,215 @@ html, body {
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+html[data-theme="theme-2"] body {
+  background-image:
+    radial-gradient(circle at top left, rgba(101, 70, 255, 0.16), transparent 22%),
+    radial-gradient(circle at top right, rgba(71, 227, 213, 0.08), transparent 18%);
+}
+
+html[data-theme] .bg-\[\#f5f7fb\] {
+  background-color: var(--background) !important;
+}
+
+html[data-theme] .bg-white {
+  background-color: var(--card) !important;
+}
+
+html[data-theme] .bg-white\/80 {
+  background-color: color-mix(in srgb, var(--card) 80%, transparent) !important;
+}
+
+html[data-theme] .bg-white\/95 {
+  background-color: color-mix(in srgb, var(--card) 95%, transparent) !important;
+}
+
+html[data-theme] .bg-gray-50 {
+  background-color: var(--surface-muted) !important;
+}
+
+html[data-theme] .bg-gray-100 {
+  background-color: var(--surface-subtle) !important;
+}
+
+html[data-theme] .bg-blue-50 {
+  background-color: var(--accent-blue-soft) !important;
+}
+
+html[data-theme] .bg-blue-100 {
+  background-color: var(--accent-blue-soft-strong) !important;
+}
+
+html[data-theme] .bg-blue-600 {
+  background-color: var(--accent-blue) !important;
+}
+
+html[data-theme] .bg-green-100,
+html[data-theme] .bg-green-50,
+html[data-theme] .bg-emerald-50 {
+  background-color: var(--accent-green-soft) !important;
+}
+
+html[data-theme] .bg-red-50,
+html[data-theme] .bg-red-100 {
+  background-color: var(--accent-red-soft) !important;
+}
+
+html[data-theme] .bg-yellow-100,
+html[data-theme] .bg-amber-50 {
+  background-color: var(--accent-yellow-soft) !important;
+}
+
+html[data-theme] .border-gray-100 {
+  border-color: var(--border-subtle) !important;
+}
+
+html[data-theme] .border-gray-200 {
+  border-color: var(--border) !important;
+}
+
+html[data-theme] .border-gray-300 {
+  border-color: var(--border-strong) !important;
+}
+
+html[data-theme] .border-blue-200 {
+  border-color: var(--accent-blue-soft-strong) !important;
+}
+
+html[data-theme] .border-red-200 {
+  border-color: color-mix(in srgb, var(--accent-red) 35%, transparent) !important;
+}
+
+html[data-theme] .border-green-200,
+html[data-theme] .border-emerald-200 {
+  border-color: color-mix(in srgb, var(--accent-green) 35%, transparent) !important;
+}
+
+html[data-theme] .border-amber-200 {
+  border-color: color-mix(in srgb, var(--accent-yellow) 35%, transparent) !important;
+}
+
+html[data-theme] .border-purple-200 {
+  border-color: var(--accent-blue-soft-strong) !important;
+}
+
+html[data-theme] .text-gray-900,
+html[data-theme] .text-gray-800 {
+  color: var(--foreground) !important;
+}
+
+html[data-theme] .text-gray-700 {
+  color: var(--muted-strong) !important;
+}
+
+html[data-theme] .text-gray-600,
+html[data-theme] .text-gray-500 {
+  color: var(--muted) !important;
+}
+
+html[data-theme] .text-gray-400 {
+  color: var(--muted-soft) !important;
+}
+
+html[data-theme] .text-gray-300 {
+  color: var(--muted-faint) !important;
+}
+
+html[data-theme] .text-blue-500,
+html[data-theme] .text-blue-600 {
+  color: var(--accent-blue) !important;
+}
+
+html[data-theme] .text-blue-700,
+html[data-theme] .text-blue-800 {
+  color: var(--accent-blue-strong) !important;
+}
+
+html[data-theme] .text-green-600,
+html[data-theme] .text-green-700,
+html[data-theme] .text-emerald-700,
+html[data-theme] .text-emerald-800 {
+  color: var(--accent-green) !important;
+}
+
+html[data-theme] .text-red-500,
+html[data-theme] .text-red-600,
+html[data-theme] .text-red-700 {
+  color: var(--accent-red) !important;
+}
+
+html[data-theme] .text-yellow-400,
+html[data-theme] .text-yellow-600,
+html[data-theme] .text-amber-800,
+html[data-theme] .text-amber-900 {
+  color: var(--accent-yellow) !important;
+}
+
+html[data-theme] .bg-blue-50\/30,
+html[data-theme] .bg-purple-50\/30 {
+  background-color: color-mix(in srgb, var(--accent-blue) 14%, var(--card)) !important;
+}
+
+html[data-theme] .bg-green-50\/30 {
+  background-color: color-mix(in srgb, var(--accent-green) 14%, var(--card)) !important;
+}
+
+html[data-theme] .bg-red-50\/30 {
+  background-color: color-mix(in srgb, var(--accent-red) 14%, var(--card)) !important;
+}
+
+html[data-theme] .hover\:bg-gray-50:hover {
+  background-color: var(--surface-muted) !important;
+}
+
+html[data-theme] .hover\:bg-gray-100:hover {
+  background-color: var(--surface-subtle) !important;
+}
+
+html[data-theme] .hover\:bg-blue-100:hover {
+  background-color: var(--accent-blue-soft-strong) !important;
+}
+
+html[data-theme] .hover\:bg-blue-700:hover {
+  background-color: var(--accent-blue-strong) !important;
+}
+
+html[data-theme] .hover\:bg-red-50:hover {
+  background-color: var(--accent-red-soft) !important;
+}
+
+html[data-theme] .hover\:bg-emerald-50:hover {
+  background-color: var(--accent-green-soft) !important;
+}
+
+html[data-theme] .hover\:text-gray-500:hover,
+html[data-theme] .hover\:text-gray-600:hover {
+  color: var(--muted) !important;
+}
+
+html[data-theme] .hover\:text-gray-700:hover,
+html[data-theme] .hover\:text-gray-900:hover {
+  color: var(--foreground) !important;
+}
+
+html[data-theme] .hover\:text-blue-700:hover,
+html[data-theme] .hover\:text-blue-800:hover {
+  color: var(--accent-blue-strong) !important;
+}
+
+html[data-theme] .hover\:text-red-500:hover {
+  color: var(--accent-red) !important;
+}
+
+html[data-theme] .from-blue-500 {
+  --tw-gradient-from: var(--gradient-from) var(--tw-gradient-from-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+html[data-theme] .to-indigo-600 {
+  --tw-gradient-to: var(--gradient-to) var(--tw-gradient-to-position) !important;
 }
 
 * {

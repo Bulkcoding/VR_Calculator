@@ -31,7 +31,11 @@ export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps) 
     <div
       ref={ref}
       className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[120px]"
-      style={{ left: x, top: y }}
+      style={
+        x > window.innerWidth / 2
+          ? { right: window.innerWidth - x, top: y }
+          : { left: x, top: y }
+      }
     >
       {items.map((item, i) => (
         <button

@@ -23,7 +23,7 @@ export default function Header({ title, rightSlot }: HeaderProps) {
         </div>
       )}
 
-      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30">
+      <header className="h-16 bg-white border-b border-gray-200 grid grid-cols-3 items-center px-4 sm:px-6 sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -31,10 +31,11 @@ export default function Header({ title, rightSlot }: HeaderProps) {
           >
             <Icon name="menu" className="w-5 h-5 text-gray-600" />
           </button>
-          <h1 className="text-base sm:text-lg font-bold text-gray-900">{title}</h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <h1 className="text-base sm:text-lg font-bold text-gray-900 text-center">{title}</h1>
+
+        <div className="flex items-center justify-end gap-2">
           {rightSlot}
 
           <div className="relative">

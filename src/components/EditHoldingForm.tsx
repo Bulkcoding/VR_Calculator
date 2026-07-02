@@ -10,7 +10,9 @@ interface EditHoldingFormProps {
     quantity: number;
     avgPrice: number;
     currency: string;
+    broker?: string;
   };
+
   onSave: () => void;
   onCancel: () => void;
 }
@@ -21,7 +23,7 @@ export default function EditHoldingForm({ holding, onSave, onCancel }: EditHoldi
     quantity: String(holding.quantity),
     avgPrice: String(holding.avgPrice),
     currency: holding.currency,
-    broker: (holding as any).broker || "manual",
+    broker: holding.broker || "manual",
   });
   const [saving, setSaving] = useState(false);
 
@@ -106,15 +108,18 @@ export default function EditHoldingForm({ holding, onSave, onCancel }: EditHoldi
             <option value="kis">한국투자증권</option>
             <option value="kiwoom">키움증권</option>
             <option value="toss">토스증권</option>
+            <option value="toss-screenshot">토스 캡처</option>
             <option value="kakao">카카오페이증권</option>
             <option value="samsung">삼성증권</option>
             <option value="mirae">미래에셋증권</option>
             <option value="daishin">대신증권</option>
             <option value="nh">NH투자증권</option>
             <option value="shinhan">신한투자증권</option>
+            <option value="hana">하나증권</option>
             <option value="kb">KB증권</option>
+            <option value="yuanta">유안타증권</option>
+            <option value="eugene">유진투자증권</option>
             <option value="ls">LS증권</option>
-            <option value="csv">CSV 업로드</option>
           </select>
         </div>
 

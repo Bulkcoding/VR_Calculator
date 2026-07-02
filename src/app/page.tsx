@@ -2,18 +2,19 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import DashboardShell from "@/components/DashboardShell";
 import StatCard from "@/components/StatCard";
 import RingProgress from "@/components/RingProgress";
 import Sparkline from "@/components/Sparkline";
 import ActivityItem from "@/components/ActivityItem";
-import CsvUploader from "@/components/CsvUploader";
 import ContextMenu from "@/components/ContextMenu";
 import EditHoldingForm from "@/components/EditHoldingForm";
 import BrokerConnectionModal from "@/components/BrokerConnectionModal";
 import WatchlistAddModal from "@/components/WatchlistAddModal";
 import { CurrencyToggle, convertAmount, formatMoney, type DisplayCurrency } from "@/components/CurrencyToggle";
+
 
 interface Holding {
   id: string;
@@ -156,6 +157,7 @@ function CardShell({ title, action, children, className = "" }: { title?: string
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [authView, setAuthView] = useState<"login" | "register">("login");
   const [holdings, setHoldings] = useState<Holding[]>([]);
@@ -163,8 +165,12 @@ export default function DashboardPage() {
   const [form, setForm] = useState({ name: "", quantity: "", avgPrice: "", currency: "KRW", broker: "manual" });
   const [loading, setLoading] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; holding: Holding } | null>(null);
+  const [watchMenu, setWatchMenu] = useState<{ x: number; y: number; watchItem: WatchItem } | null>(null);
   const [editing, setEditing] = useState<Holding | null>(null);
-  const [showKis, setShowKis] = useState(false);
+  const [brokerModal, setBrokerModal] = useState<{ open: boolean; broker: string }>({
+    open: false,
+    broker: "kis",
+  });
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
   const [showWatchAdd, setShowWatchAdd] = useState(false);
   const [holdingSparks, setHoldingSparks] = useState<Record<string, number[]>>({});
@@ -172,6 +178,8 @@ export default function DashboardPage() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("KRW");
   const [fxRate, setFxRate] = useState<number | null>(null);
+  const [syncingAll, setSyncingAll] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // 표시 통화 선택을 localStorage에 보존
   useEffect(() => {
@@ -182,6 +190,35 @@ export default function DashboardPage() {
     setDisplayCurrency(v);
     localStorage.setItem("displayCurrency", v);
   };
+
+const formatImportedBrokerNames = (brokers: string[]) => {
+  const labels: Record<string, string> = {
+    kis: "한국투자증권",
+    toss: "토스증권",
+  };
+  return brokers.map((broker) => labels[broker] || broker).join(", ");
+};
+
+const formatHoldingBroker = (broker: string) => {
+  const labels: Record<string, string> = {
+    manual: "수동",
+    kis: "한국투자증권",
+    toss: "토스증권",
+    other: "기타 증권사",
+    samsung: "삼성증권",
+    kb: "KB증권",
+    mirae: "미래에셋증권",
+    nh: "NH투자증권",
+    shinhan: "신한투자증권",
+    hana: "하나증권",
+    daishin: "대신증권",
+    yuanta: "유안타증권",
+    eugene: "유진투자증권",
+
+  };
+  return labels[broker] || broker.toUpperCase();
+};
+
 
   const fetchFx = useCallback(async () => {
     const res = await fetch("/api/fx");
@@ -271,6 +308,39 @@ export default function DashboardPage() {
     fetchHoldings();
   }, [fetchHoldings]);
 
+  const syncAllLinkedBrokers = async () => {
+    setSyncingAll(true);
+    setSyncResult(null);
+
+    const res = await fetch("/api/brokers/import-all", { method: "POST" });
+    const data = await res.json().catch(() => null);
+
+    if (res.ok) {
+      const importedBrokers = Array.isArray(data?.importedBrokers) ? data.importedBrokers : [];
+      const failedCount = Array.isArray(data?.results)
+        ? data.results.filter((item: { ok?: boolean }) => !item.ok).length
+        : 0;
+      const importedLabel = importedBrokers.length > 0 ? formatImportedBrokerNames(importedBrokers) : "연동 계좌";
+      const failureLabel = failedCount > 0 ? ` · ${failedCount}개 증권사 실패` : "";
+
+      setSyncResult({
+        ok: data?.ok !== false,
+        msg: `${importedLabel} 묶어오기 완료 · ${data?.mergedCount ?? 0}종목 반영 · ${data?.added ?? 0}개 추가, ${data?.updated ?? 0}개 갱신${failureLabel}`,
+      });
+      await fetchHoldings();
+    } else {
+      const unsupported = Array.isArray(data?.unsupportedBrokers) && data.unsupportedBrokers.length > 0
+        ? ` (미지원: ${data.unsupportedBrokers.join(", ")})`
+        : "";
+      setSyncResult({
+        ok: false,
+        msg: `묶어오기 실패: ${data?.error || "연동된 지원 증권사가 없습니다."}${unsupported}`,
+      });
+    }
+
+    setSyncingAll(false);
+  };
+
   useEffect(() => {
     if (status === "authenticated") {
       // 최초 1회: 현재가 + 차트 + 환율 로드
@@ -290,12 +360,24 @@ export default function DashboardPage() {
         fetchHoldingSparks();
         fetchWatchCharts();
       }, 60000);
+      // 증권사 연동 자동 묶어오기: 페이지 열자마자 1회 + 이후 30분 주기
+      fetch("/api/brokers/import-all", { method: "POST" })
+        .then((res) => res.json().catch(() => null))
+        .then((data) => { if (data?.ok) fetchHoldings(); })
+        .catch(() => {});
+      const brokerSyncInterval = setInterval(() => {
+        fetch("/api/brokers/import-all", { method: "POST" })
+          .then((res) => res.json().catch(() => null))
+          .then((data) => { if (data?.ok) fetchHoldings(); })
+          .catch(() => {});
+      }, 1800000);
       return () => {
         clearInterval(priceInterval);
         clearInterval(chartInterval);
+        clearInterval(brokerSyncInterval);
       };
     }
-  }, [status, refreshPrices, fetchWatchlist, fetchHoldingSparks, fetchWatchCharts, fetchFx]);
+  }, [status, refreshPrices, fetchWatchlist, fetchHoldingSparks, fetchWatchCharts, fetchFx, fetchHoldings]);
 
   const addHolding = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -314,22 +396,7 @@ export default function DashboardPage() {
     fetchHoldings();
   };
 
-  const handleCsvUpload = async (items: Record<string, string>[]) => {
-    for (const item of items) {
-      await fetch("/api/holdings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: item["종목명"] || item["name"] || "",
-          quantity: parseFloat(item["수량"] || item["quantity"] || "0"),
-          avgPrice: parseFloat(item["평균단가"] || item["avgprice"] || item["avg_price"] || "0"),
-          currency: (item["통화"] || item["currency"] || "KRW").toUpperCase(),
-          broker: "csv",
-        }),
-      });
-    }
-    fetchHoldings();
-  };
+
 
   const deleteHolding = async (id: string) => {
     await fetch(`/api/holdings?id=${id}`, { method: "DELETE" });
@@ -341,13 +408,17 @@ export default function DashboardPage() {
     setMenu({ x: e.clientX, y: e.clientY, holding });
   };
 
+  const handleWatchContextMenu = (e: React.MouseEvent, item: WatchItem) => {
+    e.preventDefault();
+    setWatchMenu({ x: e.clientX, y: e.clientY, watchItem: item });
+  };
+
   if (status === "loading") return <div className="flex min-h-screen items-center justify-center text-gray-400">로딩중...</div>;
   if (status === "unauthenticated") {
     if (authView === "register") return <RegisterView onBack={() => setAuthView("login")} />;
     return <LoginView onRegister={() => setAuthView("register")} />;
   }
 
-  const dispSym = displayCurrency === "USD" ? "$" : "₩";
   // 표시 통화로 환산하여 합산 (환율 없으면 교차통화 항목은 제외)
   const hasPriceHolding = holdings.filter((h) => h.currentPrice !== null);
   const totalAsset = hasPriceHolding.reduce((s, h) => {
@@ -368,17 +439,14 @@ export default function DashboardPage() {
 
   return (
     <DashboardShell
-      title="VR 리밸런싱"
+      title="ReValue"
       rightSlot={
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowKis(true)}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition">
+          <button
+            onClick={() => setBrokerModal({ open: true, broker: "kis" })}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition"
+          >
             🏦 증권사 연동
-          </button>
-          <CsvUploader onUpload={handleCsvUpload} />
-          <button onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition">
-            {showForm ? "취소" : "+ 종목 추가"}
           </button>
         </div>
       }
@@ -387,6 +455,12 @@ export default function DashboardPage() {
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">안녕하세요, {session?.user?.name || "원석"}님 👋</h2>
         <p className="text-sm text-gray-500 mt-1">오늘도 현명한 투자를 응원합니다.</p>
       </div>
+
+      {syncResult && (
+        <div className={`mb-6 rounded-2xl border px-4 py-3 text-sm ${syncResult.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-red-200 bg-red-50 text-red-700"}`}>
+          {syncResult.msg}
+        </div>
+      )}
 
       {showForm && (
         <CardShell className="mb-6">
@@ -402,7 +476,7 @@ export default function DashboardPage() {
                 className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}
                 className="px-2 py-2 border border-gray-200 rounded-lg text-sm bg-white">
-                <option value="KRW">₩</option>
+                <option value="KRW">원</option>
                 <option value="USD">$</option>
               </select>
             </div>
@@ -419,10 +493,13 @@ export default function DashboardPage() {
                 <option value="daishin">대신증권</option>
                 <option value="nh">NH투자증권</option>
                 <option value="shinhan">신한투자증권</option>
+                <option value="hana">하나증권</option>
                 <option value="kb">KB증권</option>
+                <option value="yuanta">유안타증권</option>
+                <option value="eugene">유진투자증권</option>
                 <option value="ls">LS증권</option>
-                <option value="csv">CSV 업로드</option>
               </select>
+
               <button type="submit" disabled={loading}
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition disabled:opacity-50">
                 {loading ? "..." : "추가"}
@@ -436,16 +513,14 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <StatCard
           label="총 자산"
-          unit={dispSym}
-          value={totalAsset.toLocaleString(undefined, { maximumFractionDigits: displayCurrency === "USD" ? 2 : 0 })}
+          value={formatMoney(totalAsset, displayCurrency)}
           change={`${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(2)}%`}
           changePositive={totalGainPct >= 0}
           subtext="전일 대비"
         />
         <StatCard
           label="총 수익"
-          unit={dispSym}
-          value={Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: displayCurrency === "USD" ? 2 : 0 })}
+          value={formatMoney(Math.abs(totalGain), displayCurrency)}
           change={`${totalGain >= 0 ? "+" : ""}${totalGainPct.toFixed(2)}%`}
           changePositive={totalGain >= 0}
           subtext="누적 수익률"
@@ -470,9 +545,12 @@ export default function DashboardPage() {
           action={
             <div className="flex items-center gap-2">
               <CurrencyToggle value={displayCurrency} onChange={changeDisplayCurrency} />
-              <button onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition">
-                + 종목 추가
+              <button
+                onClick={syncAllLinkedBrokers}
+                disabled={syncingAll}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 transition"
+              >
+                {syncingAll ? "묶어오는중..." : "연동계좌 한번에 불러오기"}
               </button>
             </div>
           }
@@ -502,14 +580,18 @@ export default function DashboardPage() {
                   const dispCur = hasPrice ? convertAmount(h.currentPrice!, h.currency, displayCurrency, fxRate) : null;
                   const spark = holdingSparks[h.id] && holdingSparks[h.id].length > 1 ? holdingSparks[h.id] : [];
                   return (
-                    <div key={h.id} onContextMenu={(e) => handleContextMenu(e, h)}
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
+                    <div
+                      key={h.id}
+                      onClick={() => router.push(`/holdings/${h.id}`)}
+                      onContextMenu={(e) => handleContextMenu(e, h)}
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition cursor-pointer"
+                    >
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
                         {h.ticker.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-sm text-gray-900 truncate">{h.name}</div>
-                        <div className="text-xs text-gray-400 truncate">{h.ticker} · {h.broker === "manual" ? "수동" : h.broker.toUpperCase()}</div>
+                        <div className="text-xs text-gray-400 truncate">{h.ticker} · {formatHoldingBroker(h.broker)}</div>
                       </div>
                       <div className="hidden sm:block w-14 text-right text-sm text-gray-700">
                         {h.quantity.toLocaleString(undefined, { maximumFractionDigits: 2 })}주
@@ -530,9 +612,9 @@ export default function DashboardPage() {
                           <div className="h-8" />
                         )}
                       </div>
-                      <Link href={`/holdings/${h.id}`} className="text-gray-300 hover:text-gray-600 shrink-0">
+                      <div className="text-gray-300 shrink-0">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-                      </Link>
+                      </div>
                     </div>
                   );
                 })}
@@ -594,6 +676,7 @@ export default function DashboardPage() {
               <div className="w-16 text-right">등락률</div>
               <div className="hidden md:block w-20 text-center">1일 차트</div>
               <div className="w-6 shrink-0" />
+              <div className="w-6 shrink-0" />
             </div>
             <div className="divide-y divide-gray-100">
               {watchlist.map((w, i) => {
@@ -606,6 +689,7 @@ export default function DashboardPage() {
                   <div
                     key={w.id}
                     data-watch-index={i}
+                    onContextMenu={(e) => handleWatchContextMenu(e, w)}
                     className={`flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition select-none ${dragIndex === i ? "bg-blue-50 opacity-70" : ""}`}
                   >
                     <span
@@ -645,6 +729,11 @@ export default function DashboardPage() {
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                       </svg>
                     </button>
+                    <button onClick={(e) => handleWatchContextMenu(e, w)} title="더보기" className="w-6 shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-600 transition">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                      </svg>
+                    </button>
                   </div>
                 );
               })}
@@ -678,7 +767,30 @@ export default function DashboardPage() {
         />
       )}
 
-      {showKis && <BrokerConnectionModal onClose={() => setShowKis(false)} onImported={() => fetchHoldings()} />}
+      {watchMenu && (
+        <ContextMenu
+          x={watchMenu.x} y={watchMenu.y}
+          items={[
+            {
+              label: "보유 종목으로 이동",
+              onClick: () => {
+                const item = watchMenu.watchItem;
+                setShowForm(true);
+                setForm({ name: item.name, quantity: "", avgPrice: "", currency: item.currency, broker: "manual" });
+              },
+            },
+          ]}
+          onClose={() => setWatchMenu(null)}
+        />
+      )}
+
+      {brokerModal.open && (
+        <BrokerConnectionModal
+          initialBroker={brokerModal.broker}
+          onClose={() => setBrokerModal({ open: false, broker: "kis" })}
+          onImported={() => fetchHoldings()}
+        />
+      )}
 
       {showWatchAdd && (
         <WatchlistAddModal

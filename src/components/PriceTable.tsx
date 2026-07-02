@@ -5,7 +5,7 @@ interface PriceTableProps {
   currency?: string;
 }
 
-const sym = (c?: string) => (c === "USD" ? "$" : "₩");
+const sym = (c?: string) => (c === "USD" ? "$" : "원");
 
 export default function PriceTable({ result, currency }: PriceTableProps) {
   const unit = sym(currency);

@@ -45,7 +45,8 @@ export function convertAmount(
 
 export function formatMoney(value: number | null, currency: DisplayCurrency): string {
   if (value == null) return "—";
-  const sym = currency === "USD" ? "$" : "₩";
   const digits = currency === "USD" ? 2 : 0;
-  return `${sym}${value.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+  const formatted = value.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  if (currency === "USD") return `$${formatted}`;
+  return `${formatted}원`;
 }

@@ -76,7 +76,7 @@ export default function WatchlistAddModal({ onClose, onAdded, existingTickers = 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="종목명 또는 티커 검색 (예: 삼성전자, AAPL)"
-              className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {searching && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">검색중…</span>}
           </div>

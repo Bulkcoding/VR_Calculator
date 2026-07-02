@@ -71,6 +71,7 @@ function ScheduleTable({
 }) {
   const isBuy = type === "buy";
   const [showAll, setShowAll] = useState(false);
+  const [inputStr, setInputStr] = useState<Record<number, string>>({});
 
   const accentText = isBuy ? "text-green-600" : "text-red-500";
   const accentBar = isBuy ? "bg-green-500" : "bg-red-500";
@@ -103,8 +104,14 @@ function ScheduleTable({
                 <input
                   type="number"
                   min="1"
-                  value={row.unit}
-                  onChange={(e) => onUnitChange(row.step, Math.max(1, parseInt(e.target.value) || 1))}
+                  value={inputStr[row.step] ?? row.unit}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setInputStr((prev) => ({ ...prev, [row.step]: v }));
+                    if (v === "" || v === "-") return;
+                    const num = parseInt(v, 10);
+                    if (!isNaN(num) && num >= 1) onUnitChange(row.step, num);
+                  }}
                   className="w-14 px-2 py-1 border border-gray-200 rounded text-xs text-center bg-white"
                   title="매도/매수 단위 (주)"
                 />

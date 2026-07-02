@@ -50,3 +50,6 @@ next-env.d.ts
 # opencode
 .omo/
 tui.json
+
+# env files (catch-all)
+.env*
