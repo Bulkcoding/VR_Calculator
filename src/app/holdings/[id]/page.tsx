@@ -234,6 +234,7 @@ export default function VrEditorPage() {
   const [startingCycle, setStartingCycle] = useState(false);
   const [buyUnits, setBuyUnits] = useState<number[]>(() => Array(30).fill(1));
   const [sellUnits, setSellUnits] = useState<number[]>(() => Array(30).fill(1));
+  const [inputStr, setInputStr] = useState<Record<string, string>>({});
 
   const fetchData = useCallback(async () => {
     const res = await fetch("/api/holdings");
@@ -276,10 +277,8 @@ export default function VrEditorPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
   const updateNumber = (key: keyof typeof params, value: string) => {
-    if (value === "" || value === "-") {
-      setParams((prev) => ({ ...prev, [key]: 0 as any }));
-      return;
-    }
+    setInputStr((prev) => ({ ...prev, [key]: value }));
+    if (value === "" || value === "-") return;
     const num = parseFloat(value);
     if (!isNaN(num)) setParams((prev) => ({ ...prev, [key]: num as any }));
   };
@@ -472,7 +471,7 @@ export default function VrEditorPage() {
               <label className="block text-[11px] text-gray-500 mb-1">기준값 (V)</label>
               <div className="relative">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input type="number" value={params.vValue} onChange={(e) => updateNumber("vValue", e.target.value)} className={inputClass + " pl-6"} step="any" />
+                <input type="number" value={inputStr.vValue ?? params.vValue} onChange={(e) => updateNumber("vValue", e.target.value)} className={inputClass + " pl-6"} step="any" />
               </div>
             </div>
             <div>
@@ -506,7 +505,7 @@ export default function VrEditorPage() {
 
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">분할 수 (G)</label>
-              <input type="number" value={params.divisorG} onChange={(e) => updateNumber("divisorG", e.target.value)} className={inputClass} min="1" />
+              <input type="number" value={inputStr.divisorG ?? params.divisorG} onChange={(e) => updateNumber("divisorG", e.target.value)} className={inputClass} min="1" />
             </div>
 
             {params.mode === "contribution" && (
@@ -514,7 +513,7 @@ export default function VrEditorPage() {
                 <label className="block text-[11px] text-gray-500 mb-1">적립금</label>
                 <div className="relative">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                  <input type="number" value={params.contribution} onChange={(e) => updateNumber("contribution", e.target.value)} className={inputClass + " pl-6"} step="any" />
+                  <input type="number" value={inputStr.contribution ?? params.contribution} onChange={(e) => updateNumber("contribution", e.target.value)} className={inputClass + " pl-6"} step="any" />
                 </div>
               </div>
             )}
@@ -523,7 +522,7 @@ export default function VrEditorPage() {
                 <label className="block text-[11px] text-gray-500 mb-1">인출금</label>
                 <div className="relative">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                  <input type="number" value={params.withdrawal} onChange={(e) => updateNumber("withdrawal", e.target.value)} className={inputClass + " pl-6"} step="any" />
+                  <input type="number" value={inputStr.withdrawal ?? params.withdrawal} onChange={(e) => updateNumber("withdrawal", e.target.value)} className={inputClass + " pl-6"} step="any" />
                 </div>
               </div>
             )}
@@ -532,12 +531,12 @@ export default function VrEditorPage() {
               <label className="block text-[11px] text-gray-500 mb-1">현재 Pool</label>
               <div className="relative">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input type="number" value={params.pool} onChange={(e) => updateNumber("pool", e.target.value)} className={inputClass + " pl-6"} step="any" />
+                <input type="number" value={inputStr.pool ?? params.pool} onChange={(e) => updateNumber("pool", e.target.value)} className={inputClass + " pl-6"} step="any" />
               </div>
             </div>
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">보유개수</label>
-              <input type="number" value={params.currentQty} onChange={(e) => updateNumber("currentQty", e.target.value)} className={inputClass} min="0" />
+              <input type="number" value={inputStr.currentQty ?? params.currentQty} onChange={(e) => updateNumber("currentQty", e.target.value)} className={inputClass} min="0" />
             </div>
           </div>
 
