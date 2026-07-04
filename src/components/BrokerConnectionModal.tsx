@@ -158,7 +158,7 @@ export default function BrokerConnectionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
         <div className="flex items-start justify-between px-6 pt-6 pb-4">
           <div>
             <h2 className="text-lg font-bold text-gray-900">증권사 연동</h2>
