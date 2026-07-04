@@ -128,7 +128,7 @@ export default function WatchlistPage() {
                   const already = watchedTickers.has(r.ticker);
                   return (
                     <div key={r.ticker} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-600 to-indigo-700 flex items-center justify-center text-white text-[10px] font-extrabold shrink-0">
                         {r.ticker.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ export default function WatchlistPage() {
                 return (
                   <div key={it.id}>
                     <div className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-600 to-indigo-700 flex items-center justify-center text-white text-xs font-extrabold shrink-0">
                         {it.ticker.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
