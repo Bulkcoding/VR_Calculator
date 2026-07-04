@@ -37,6 +37,7 @@ export default function BrokerConnectionModal({
   initialBroker = "kis",
 }: BrokerConnectionModalProps) {
   const [selectedBroker, setSelectedBroker] = useState(initialBroker);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hasCredentials, setHasCredentials] = useState(false);
   const [needsReauth, setNeedsReauth] = useState(false);
   const [form, setForm] = useState({ appKey: "", appSecret: "", accNo: "" });
@@ -44,9 +45,20 @@ export default function BrokerConnectionModal({
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{ msg: string; ok: boolean } | null>(null);
   const reqBrokerRef = useRef(selectedBroker);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const broker = findBroker(selectedBroker);
   const supportsApi = broker.supportsApi;
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const resetCredentialState = useCallback(() => {
     setHasCredentials(false);
@@ -160,32 +172,45 @@ export default function BrokerConnectionModal({
         </div>
 
         <div className="px-6 pb-6 space-y-4">
-          <div>
-            <p className="text-xs font-medium text-gray-700 mb-2">증권사 선택</p>
-            <div className="grid grid-cols-2 gap-2">
-              {BROKERS.map((item) => {
-                const isSelected = selectedBroker === item.id;
-                return (
+          <div className="relative" ref={dropdownRef}>
+            <p className="text-xs font-medium text-gray-700 mb-1.5">증권사 선택</p>
+            <button
+              type="button"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="w-full flex items-center gap-2 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 transition"
+            >
+              <div className={`w-6 h-6 rounded ${broker.color} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}>
+                {broker.shortName}
+              </div>
+              <span className="flex-1 text-left text-gray-900">{broker.name}</span>
+              <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {dropdownOpen && (
+              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                {BROKERS.map((item) => (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => selectBroker(item.id)}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition ${
-                      isSelected
-                        ? "border-blue-400 bg-blue-50 ring-1 ring-blue-300"
-                        : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                    }`}
+                    onClick={() => { selectBroker(item.id); setDropdownOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-blue-50 transition"
                   >
-                    <div className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
+                    <div className={`w-6 h-6 rounded ${item.color} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}>
                       {item.shortName}
                     </div>
-                    <span className={`text-xs font-semibold ${isSelected ? "text-blue-700" : "text-gray-800"}`}>
+                    <span className={selectedBroker === item.id ? "flex-1 text-left text-blue-600 font-medium" : "flex-1 text-left text-gray-700"}>
                       {item.name}
                     </span>
+                    {selectedBroker === item.id && (
+                      <svg className="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
                   </button>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
             {supportsApi && hasCredentials && (
