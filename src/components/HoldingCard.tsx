@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { getBrokerLogoPath } from "@/lib/brokerLogos";
 
 interface HoldingCardProps {
   id: string;
@@ -14,22 +16,22 @@ interface HoldingCardProps {
 const currencySymbol = (c: string) => (c === "USD" ? "$" : "원");
 
 const brokerLabel: Record<string, string> = {
-  kis: "한투",
-  kiwoom: "키움",
-  toss: "토스",
+  kis: "한국투자증권",
+  kiwoom: "키움증권",
+  toss: "토스증권",
   "toss-screenshot": "토스 캡처",
   multi: "통합",
   other: "기타",
-  kakao: "카카오",
-  samsung: "삼성",
-  mirae: "미래에셋",
-  daishin: "대신",
-  nh: "NH투자",
-  shinhan: "신한",
-  hana: "하나",
+  kakao: "카카오증권",
+  samsung: "삼성증권",
+  mirae: "미래에셋증권",
+  daishin: "대신증권",
+  nh: "NH투자증권",
+  shinhan: "신한투자증권",
+  hana: "하나증권",
   kb: "KB증권",
-  yuanta: "유안타",
-  eugene: "유진",
+  yuanta: "유안타증권",
+  eugene: "유진투자증권",
   ls: "LS증권",
   csv: "CSV",
   manual: "",
@@ -65,6 +67,7 @@ export default function HoldingCard({ id, name, ticker, quantity, avgPrice, curr
   const gainAmount = hasPrice ? (currentPrice! - avgPrice) * quantity : null;
   const badge = brokerLabel[broker];
   const badgeColor = brokerColors[broker];
+  const logoPath = getBrokerLogoPath(broker);
 
   return (
     <Link
@@ -72,11 +75,9 @@ export default function HoldingCard({ id, name, ticker, quantity, avgPrice, curr
       className="block rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md hover:border-blue-300"
     >
       <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-1.5">
-          {badge && (
-            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${badgeColor}`}>
-              {badge}
-            </span>
+        <div className="flex items-center gap-2">
+          {logoPath && (
+            <Image src={logoPath} alt={badge || ""} width={24} height={24} className="w-6 h-6 rounded-full object-contain" unoptimized />
           )}
           <div>
             <h3 className="font-semibold text-gray-900">{name}</h3>
@@ -100,16 +101,16 @@ export default function HoldingCard({ id, name, ticker, quantity, avgPrice, curr
       </div>
       <div className="text-sm text-gray-600 space-y-1">
         <div className="flex justify-between">
-          <span>보유수량</span>
+          <span>보유?�량</span>
           <span className="font-medium">{quantity.toLocaleString()}</span>
         </div>
         <div className="flex justify-between">
-          <span>평균단가</span>
+          <span>?�균?��?</span>
           <span className="font-medium">{unit}{avgPrice.toLocaleString()}</span>
         </div>
         {hasPrice && (
           <div className="flex justify-between">
-            <span>현재가</span>
+            <span>?�재가</span>
             <span className="font-medium">{unit}{currentPrice!.toLocaleString()}</span>
           </div>
         )}
@@ -117,3 +118,6 @@ export default function HoldingCard({ id, name, ticker, quantity, avgPrice, curr
     </Link>
   );
 }
+
+
+
