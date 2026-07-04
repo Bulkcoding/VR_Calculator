@@ -13,6 +13,7 @@ const brokerLogos: Record<string, string> = {
   yuanta: "/brokers/yuanta.jpg",
   eugene: "/brokers/eugene.webp",
   kakao: "/brokers/kakao.png",
+  hana: "/brokers/hana.jpg",
 };
 
 export function getBrokerLogoPath(brokerId: string): string | null {
