@@ -157,7 +157,7 @@ export default function BrokerConnectionModal({
     : "이 증권사는 현재 이 앱에서 자동 불러오기를 지원하지 않습니다.";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[8vh] bg-black/40 px-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
         <div className="flex items-start justify-between px-6 pt-6 pb-4">
           <div>
@@ -188,7 +188,7 @@ export default function BrokerConnectionModal({
               </svg>
             </button>
             {dropdownOpen && (
-              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                 {BROKERS.map((item) => (
                   <button
                     key={item.id}
