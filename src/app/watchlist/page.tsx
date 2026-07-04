@@ -168,7 +168,7 @@ export default function WatchlistPage() {
                 return (
                   <div key={it.id}>
                     <div className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-600 to-indigo-700 flex items-center justify-center text-white text-xs font-extrabold shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-600 to-indigo-700 flex items-center justify-center text-white text-xs font-extrabold shrink-0 drop-shadow-sm">
                         {it.ticker.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
