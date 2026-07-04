@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
+import { getBrokerLogoPath } from "@/lib/brokerLogos";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import DashboardShell from "@/components/DashboardShell";
@@ -596,7 +598,12 @@ const formatHoldingBroker = (broker: string) => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-sm text-gray-900 truncate">{h.name}</div>
-                        <div className="text-xs text-gray-400 truncate">{h.ticker} · {formatHoldingBroker(h.broker)}</div>
+                        <div className="text-xs text-gray-400 truncate flex items-center gap-1">
+                          {(getBrokerLogoPath(h.broker) ? (
+                            <Image src={getBrokerLogoPath(h.broker)!} alt="" width={14} height={14} className="w-3.5 h-3.5 rounded-full object-contain inline-block" unoptimized />
+                          ) : null)}
+                          {h.ticker} · {formatHoldingBroker(h.broker)}
+                        </div>
                       </div>
                       <div className="hidden sm:block w-14 text-right text-sm text-gray-700">
                         {h.quantity.toLocaleString(undefined, { maximumFractionDigits: 2 })}주
