@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getBrokerLogoPath } from "@/lib/brokerLogos";
 
 const BROKERS = [
   { id: "kis", name: "한국투자증권", shortName: "KIS", color: "bg-blue-600", guideUrl: "https://apiportal.koreainvestment.com", supportsApi: true },
@@ -179,9 +181,14 @@ export default function BrokerConnectionModal({
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="w-full flex items-center gap-2 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 transition"
             >
-              <div className={`w-6 h-6 rounded ${broker.color} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}>
-                {broker.shortName}
-              </div>
+              <Image
+                src={getBrokerLogoPath(broker.id) || ""}
+                alt={broker.name}
+                width={24}
+                height={24}
+                className="w-6 h-6 rounded-full object-contain shrink-0"
+                unoptimized
+              />
               <span className="flex-1 text-left text-gray-900">{broker.name}</span>
               <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="6 9 12 15 18 9" />
@@ -195,11 +202,16 @@ export default function BrokerConnectionModal({
                     type="button"
                     onClick={() => { selectBroker(item.id); setDropdownOpen(false); }}
                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-blue-50 transition"
-                  >
-                    <div className={`w-6 h-6 rounded ${item.color} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}>
-                      {item.shortName}
-                    </div>
-                    <span className={selectedBroker === item.id ? "flex-1 text-left text-blue-600 font-medium" : "flex-1 text-left text-gray-700"}>
+                    >
+                      <Image
+                        src={getBrokerLogoPath(item.id) || ""}
+                        alt={item.name}
+                        width={24}
+                        height={24}
+                        className="w-6 h-6 rounded-full object-contain shrink-0"
+                        unoptimized
+                      />
+                      <span className={selectedBroker === item.id ? "flex-1 text-left text-blue-600 font-medium" : "flex-1 text-left text-gray-700"}>
                       {item.name}
                     </span>
                     {selectedBroker === item.id && (

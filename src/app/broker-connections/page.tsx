@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
 import BrokerConnectionModal from "@/components/BrokerConnectionModal";
+import { getBrokerLogoPath } from "@/lib/brokerLogos";
 
 const ALL_BROKERS = [
   { id: "kis", name: "한국투자증권", shortName: "KIS", color: "bg-blue-600", supportsImport: true },
@@ -132,11 +134,14 @@ export default function BrokerConnectionsPage() {
                 const info = getBrokerInfo(c.broker);
                 return (
                   <div key={c.broker} className="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
-                    <div
-                      className={`w-12 h-12 rounded-xl ${info?.color || "bg-gray-400"} flex items-center justify-center text-white text-sm font-bold shrink-0`}
-                    >
-                      {info?.shortName || c.broker.slice(0, 2).toUpperCase()}
-                    </div>
+                    <Image
+                      src={getBrokerLogoPath(c.broker) || ""}
+                      alt={info?.name || c.broker}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 rounded-full object-contain shrink-0"
+                      unoptimized
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-sm text-gray-900">
@@ -208,11 +213,14 @@ export default function BrokerConnectionsPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {availableBrokers.map((b) => (
                 <div key={b.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:border-gray-300 transition">
-                  <div
-                    className={`w-10 h-10 rounded-lg ${b.color} flex items-center justify-center text-white text-xs font-bold shrink-0`}
-                  >
-                    {b.shortName}
-                  </div>
+                  <Image
+                    src={getBrokerLogoPath(b.id) || ""}
+                    alt={b.name}
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full object-contain shrink-0"
+                    unoptimized
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold text-gray-800 truncate">{b.name}</div>
                   </div>
