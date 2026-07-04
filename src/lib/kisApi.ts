@@ -15,7 +15,16 @@ export interface KisHolding {
   currentPrice: number;
 }
 
+// 한투는 client당 유효 토큰 1개 정책. 만료 60초 전까지 재사용한다.
+const tokenCache = new Map<string, { token: KisToken; expiresAt: number }>();
+
 async function getToken(appKey: string, appSecret: string, isDemo = false): Promise<KisToken> {
+  const cacheKey = `${appKey}:${isDemo}`;
+  const cached = tokenCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now() + 60_000) {
+    return cached.token;
+  }
+
   const base = isDemo ? KIS_DEMO_URL : KIS_REAL_URL;
   const res = await fetch(`${base}/oauth2/tokenP`, {
     method: "POST",
@@ -30,7 +39,9 @@ async function getToken(appKey: string, appSecret: string, isDemo = false): Prom
     const err = await res.text();
     throw new Error(`KIS token error: ${err}`);
   }
-  return res.json();
+  const token: KisToken = await res.json();
+  tokenCache.set(cacheKey, { token, expiresAt: Date.now() + token.expires_in * 1000 });
+  return token;
 }
 
 export interface KisAccountSummary {

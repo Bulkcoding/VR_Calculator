@@ -3,17 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const BROKERS = [
-  { id: "kis", name: "한국투자증권", guideUrl: "https://apiportal.koreainvestment.com", supportsApi: true },
-  { id: "toss", name: "토스증권", guideUrl: "https://developers.tossinvest.com/docs", supportsApi: true },
-  { id: "samsung", name: "삼성증권", guideUrl: "https://www.samsungpop.com", supportsApi: false },
-  { id: "kb", name: "KB증권", guideUrl: "https://openapi.kbsec.com", supportsApi: false },
-  { id: "mirae", name: "미래에셋증권", guideUrl: "https://securities.miraeasset.com", supportsApi: false },
-  { id: "nh", name: "NH투자증권", guideUrl: "https://developers.nhqv.com", supportsApi: false },
-  { id: "shinhan", name: "신한투자증권", guideUrl: "https://openapi.shinhaninvest.com", supportsApi: false },
-  { id: "hana", name: "하나증권", guideUrl: "https://openapi.hanaw.com", supportsApi: false },
-  { id: "daishin", name: "대신증권", guideUrl: "https://www.daishin.com", supportsApi: false },
-  { id: "yuanta", name: "유안타증권", guideUrl: "https://www.myasset.com", supportsApi: false },
-  { id: "eugene", name: "유진투자증권", guideUrl: "https://www.eugenefn.com", supportsApi: false },
+  { id: "kis", name: "한국투자증권", shortName: "KIS", color: "bg-blue-600", guideUrl: "https://apiportal.koreainvestment.com", supportsApi: true },
+  { id: "toss", name: "토스증권", shortName: "TS", color: "bg-blue-500", guideUrl: "https://developers.tossinvest.com/docs", supportsApi: true },
+  { id: "samsung", name: "삼성증권", shortName: "SS", color: "bg-orange-500", guideUrl: "https://www.samsungpop.com", supportsApi: false },
+  { id: "kb", name: "KB증권", shortName: "KB", color: "bg-yellow-500", guideUrl: "https://openapi.kbsec.com", supportsApi: false },
+  { id: "mirae", name: "미래에셋증권", shortName: "MA", color: "bg-teal-600", guideUrl: "https://securities.miraeasset.com", supportsApi: false },
+  { id: "nh", name: "NH투자증권", shortName: "NH", color: "bg-green-600", guideUrl: "https://developers.nhqv.com", supportsApi: false },
+  { id: "shinhan", name: "신한투자증권", shortName: "SH", color: "bg-blue-700", guideUrl: "https://openapi.shinhaninvest.com", supportsApi: false },
+  { id: "hana", name: "하나증권", shortName: "HA", color: "bg-emerald-600", guideUrl: "https://openapi.hanaw.com", supportsApi: false },
+  { id: "daishin", name: "대신증권", shortName: "DS", color: "bg-gray-600", guideUrl: "https://www.daishin.com", supportsApi: false },
+  { id: "yuanta", name: "유안타증권", shortName: "YT", color: "bg-red-500", guideUrl: "https://www.myasset.com", supportsApi: false },
+  { id: "eugene", name: "유진투자증권", shortName: "EG", color: "bg-purple-600", guideUrl: "https://www.eugenefn.com", supportsApi: false },
 ] as const;
 
 const IMPORT_ENDPOINTS: Record<string, string> = {
@@ -37,28 +37,16 @@ export default function BrokerConnectionModal({
   initialBroker = "kis",
 }: BrokerConnectionModalProps) {
   const [selectedBroker, setSelectedBroker] = useState(initialBroker);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hasCredentials, setHasCredentials] = useState(false);
   const [needsReauth, setNeedsReauth] = useState(false);
   const [form, setForm] = useState({ appKey: "", appSecret: "", accNo: "" });
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{ msg: string; ok: boolean } | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const reqBrokerRef = useRef(selectedBroker);
 
   const broker = findBroker(selectedBroker);
   const supportsApi = broker.supportsApi;
-
-  useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, []);
 
   const resetCredentialState = useCallback(() => {
     setHasCredentials(false);
@@ -172,44 +160,33 @@ export default function BrokerConnectionModal({
         </div>
 
         <div className="px-6 pb-6 space-y-4">
-          <div className="flex gap-3">
-            <div className="flex-1 relative" ref={dropdownRef}>
-              <p className="text-xs font-medium text-gray-700 mb-1.5">증권사 선택</p>
-              <button
-                type="button"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 transition"
-              >
-                <span className="text-gray-900">{broker.name}</span>
-                <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              {dropdownOpen && (
-                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-                  {BROKERS.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        selectBroker(item.id);
-                        setDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-blue-50 transition"
-                    >
-                      <span className={selectedBroker === item.id ? "text-blue-600 font-medium" : "text-gray-700"}>
-                        {item.name}
-                      </span>
-                      {selectedBroker === item.id && (
-                        <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+          <div>
+            <p className="text-xs font-medium text-gray-700 mb-2">증권사 선택</p>
+            <div className="grid grid-cols-2 gap-2">
+              {BROKERS.map((item) => {
+                const isSelected = selectedBroker === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => selectBroker(item.id)}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition ${
+                      isSelected
+                        ? "border-blue-400 bg-blue-50 ring-1 ring-blue-300"
+                        : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
+                      {item.shortName}
+                    </div>
+                    <span className={`text-xs font-semibold ${isSelected ? "text-blue-700" : "text-gray-800"}`}>
+                      {item.name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
             {supportsApi && hasCredentials && (
               <div className="flex-1">
@@ -238,7 +215,6 @@ export default function BrokerConnectionModal({
                 )}
               </div>
             )}
-          </div>
 
           {!supportsApi && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-800">
@@ -247,7 +223,7 @@ export default function BrokerConnectionModal({
           )}
 
           {supportsApi && (
-            <>
+            <div className="space-y-3">
               <form id="broker-form" onSubmit={handleSave} className="space-y-3">
                 <div>
                   <label className="text-xs font-medium text-gray-700 mb-1 block">ApiKey</label>
@@ -316,7 +292,7 @@ export default function BrokerConnectionModal({
                   ))}
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {result && (
