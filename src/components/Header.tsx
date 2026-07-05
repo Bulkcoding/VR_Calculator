@@ -12,7 +12,6 @@ interface HeaderProps {
 export default function Header({ title, rightSlot }: HeaderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const showWordmark = title === "ReValue";
 
   return (
     <>
@@ -26,21 +25,21 @@ export default function Header({ title, rightSlot }: HeaderProps) {
       )}
 
       <header className="sticky top-0 z-30 flex h-[74px] items-center justify-between border-b border-gray-200 bg-white px-4 sm:h-[84px] sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="z-10 flex min-w-0 items-center gap-3">
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition"
           >
             <Icon name="menu" className="w-5 h-5 text-gray-600" />
           </button>
-          {showWordmark ? (
-            <BrandWordmark className="h-auto w-[150px] sm:w-[210px]" priority />
-          ) : (
-            <h1 className="truncate text-base font-bold text-gray-900 sm:text-lg">{title}</h1>
-          )}
+          <BrandWordmark className="h-auto w-[150px] sm:w-[210px]" priority />
         </div>
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="pointer-events-none absolute inset-x-0 flex justify-center px-20 sm:px-28">
+          <h1 className="truncate text-base font-bold text-gray-900 sm:text-lg">{title}</h1>
+        </div>
+
+        <div className="z-10 flex items-center justify-end gap-2">
           {rightSlot}
 
           <div className="relative">

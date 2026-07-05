@@ -380,7 +380,7 @@ export default function VrEditorPage() {
 
   return (
     <DashboardShell
-      title="포트폴리오로 돌아가기"
+      title="리밸런싱"
       rightSlot={
         <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
@@ -389,7 +389,7 @@ export default function VrEditorPage() {
       }
     >
       <div className="mb-2">
-        <Link href="/" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">← 포트폴리오로 돌아가기</Link>
+        <Link href="/" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">← 리밸런싱</Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
