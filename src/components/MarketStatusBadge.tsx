@@ -40,18 +40,22 @@ export default function MarketStatusBadge() {
       const dst = isUSDST(now);
       const { h, m } = getNowHours();
 
-      // 한국 정규장: 09:00 ~ 15:30 KST
-      const krOpen = inRange(h, m, 9, 15.5);
+      const kstDay = new Date(Date.now() + 9 * 3600000).getUTCDay();
+      const isKrWeekday = kstDay >= 1 && kstDay <= 5;
+      const krOpen = isKrWeekday && inRange(h, m, 9, 15.5);
 
       const etOffset = dst ? 13 : 14;
       const etH = (h - etOffset + 24) % 24;
+
+      const etDay = new Date(Date.now() + (9 - etOffset) * 3600000).getUTCDay();
+      const isUsWeekday = etDay >= 1 && etDay <= 5;
 
       const usSessions = [
         { label: "해외 프리마켓",   time: "04:00 ~ 09:30", open: 4, close: 9.5 },
         { label: "해외 정규장",     time: "09:30 ~ 16:00", open: 9.5, close: 16 },
         { label: "해외 애프터마켓", time: "16:00 ~ 20:00", open: 16, close: 20 },
       ];
-      const active = usSessions.find((s) => inRange(etH, m, s.open, s.close));
+      const active = isUsWeekday ? usSessions.find((s) => inRange(etH, m, s.open, s.close)) : undefined;
       const usLine = active ?? { label: "해외 장종료", time: "—", isOpen: false };
 
       setLines([
