@@ -95,7 +95,7 @@ export default function WatchlistPage() {
   }
 
   return (
-    <DashboardShell title="관심종목">
+    <DashboardShell title="" subtitle="관심종목">
       <div className="space-y-6">
         <p className="text-sm text-gray-500 -mt-2">
           종목을 검색해 관심목록에 추가하면 Yahoo Finance 시세와 차트를 확인할 수 있습니다.

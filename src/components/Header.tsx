@@ -6,10 +6,11 @@ import BrandWordmark from "./BrandWordmark";
 
 interface HeaderProps {
   title: string;
+  subtitle?: string;
   rightSlot?: React.ReactNode;
 }
 
-export default function Header({ title, rightSlot }: HeaderProps) {
+export default function Header({ title, subtitle, rightSlot }: HeaderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
 
@@ -35,9 +36,11 @@ export default function Header({ title, rightSlot }: HeaderProps) {
           <BrandWordmark className="h-auto w-[150px] sm:w-[210px]" priority />
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 flex justify-center px-20 sm:px-28">
-          <h1 className="truncate text-base font-bold text-gray-900 sm:text-lg">{title}</h1>
-        </div>
+        {subtitle && (
+          <div className="pointer-events-none absolute inset-x-0 flex justify-center px-20 sm:px-28">
+            <p className="truncate text-xs font-medium text-gray-500">{subtitle}</p>
+          </div>
+        )}
 
         <div className="z-10 flex items-center justify-end gap-2">
           {rightSlot}

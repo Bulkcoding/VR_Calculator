@@ -81,7 +81,8 @@ export default function BrokerConnectionsPage() {
 
   return (
     <DashboardShell
-      title="증권사 연동"
+      title=""
+      subtitle="증권사 연동"
       rightSlot={
         <div className="flex items-center gap-2">
           <button

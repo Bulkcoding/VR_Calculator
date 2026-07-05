@@ -410,7 +410,8 @@ export default function VrEditorPage() {
 
   return (
     <DashboardShell
-      title="리밸런싱"
+      title=""
+      subtitle="리밸런싱"
       rightSlot={
         <button
           aria-label="더보기"

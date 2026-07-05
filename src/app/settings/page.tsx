@@ -171,7 +171,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <DashboardShell title="설정">
+    <DashboardShell title="" subtitle="설정">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">테마 설정</h1>
