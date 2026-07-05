@@ -524,14 +524,14 @@ const formatHoldingBroker = (broker: string) => {
           value={formatMoney(totalAsset, displayCurrency)}
           change={`${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(2)}%`}
           changePositive={totalGainPct >= 0}
-          subtext="전일 대비"
+          subtext="수익률"
         />
         <StatCard
           label="총 수익"
           value={formatMoney(Math.abs(totalGain), displayCurrency)}
           change={`${totalGain >= 0 ? "+" : ""}${totalGainPct.toFixed(2)}%`}
           changePositive={totalGain >= 0}
-          subtext="누적 수익률"
+          subtext="수익률"
           accent="blue"
         />
         {/* 실현 수익: 매도 기록/실현손익 API 미지원으로 임시 비활성화 (추후 복구)
