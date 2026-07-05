@@ -38,7 +38,7 @@ function ThemeCard({
           </div>
           <p className="mt-1 text-sm text-gray-500">{theme.description}</p>
           <div className="mt-3 inline-flex rounded-xl border border-gray-200 bg-white/80 px-3 py-2">
-            <BrandWordmark themeId={theme.id} className="h-5 w-auto" />
+            <BrandWordmark themeId={theme.id} className="h-auto w-[132px]" />
           </div>
         </div>
         <span

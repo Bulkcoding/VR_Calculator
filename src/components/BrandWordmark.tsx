@@ -12,7 +12,7 @@ interface BrandWordmarkProps {
 
 export default function BrandWordmark({
   themeId,
-  className = "h-7 w-auto",
+  className = "h-auto w-[150px]",
   priority = false,
 }: BrandWordmarkProps) {
   const themeContext = useTheme();
@@ -22,8 +22,8 @@ export default function BrandWordmark({
     <Image
       src={theme.branding.wordmarkSrc}
       alt="ReValue"
-      width={1983}
-      height={793}
+      width={790}
+      height={316}
       priority={priority}
       className={className}
     />

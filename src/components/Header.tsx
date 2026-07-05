@@ -25,7 +25,7 @@ export default function Header({ title, rightSlot }: HeaderProps) {
         </div>
       )}
 
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 sm:px-6">
+      <header className="sticky top-0 z-30 flex h-[74px] items-center justify-between border-b border-gray-200 bg-white px-4 sm:h-[84px] sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -34,7 +34,7 @@ export default function Header({ title, rightSlot }: HeaderProps) {
             <Icon name="menu" className="w-5 h-5 text-gray-600" />
           </button>
           {showWordmark ? (
-            <BrandWordmark className="h-6 w-auto sm:h-7" priority />
+            <BrandWordmark className="h-auto w-[150px] sm:w-[210px]" priority />
           ) : (
             <h1 className="truncate text-base font-bold text-gray-900 sm:text-lg">{title}</h1>
           )}

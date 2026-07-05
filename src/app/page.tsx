@@ -63,7 +63,7 @@ function LoginView({ onRegister }: { onRegister: () => void }) {
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-8">
           <BrandMark />
-          <BrandWordmark className="h-8 w-auto" priority />
+          <BrandWordmark className="h-auto w-[180px] sm:w-[220px]" priority />
         </div>
         <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4 shadow-sm">
           <input type="email" placeholder="이메일" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
