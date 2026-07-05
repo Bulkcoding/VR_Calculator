@@ -2,6 +2,7 @@
 
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import ThemeQuickSwitch from "./ThemeQuickSwitch";
 
 interface DashboardShellProps {
   title: string;
@@ -17,8 +18,9 @@ export default function DashboardShell({ title, rightSlot, children }: Dashboard
       </div>
       <div className="flex-1 flex flex-col min-w-0">
         <Header title={title} rightSlot={rightSlot} />
-        <main className="flex-1 p-4 sm:p-6 max-w-[1400px] w-full mx-auto">{children}</main>
+        <main className="flex-1 w-full max-w-[1400px] mx-auto p-4 pb-24 sm:p-6 sm:pb-24">{children}</main>
       </div>
+      <ThemeQuickSwitch />
     </div>
   );
 }

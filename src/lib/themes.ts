@@ -1,10 +1,13 @@
-export type ThemeId = "classic" | "theme-2";
+export type ThemeId = "classic" | "green" | "theme-2";
 
 export interface AppTheme {
   id: ThemeId;
   label: string;
   description: string;
   appearance: "light" | "dark";
+  branding: {
+    wordmarkSrc: string;
+  };
   palette: {
     background: string;
     surface: string;
@@ -28,9 +31,12 @@ export const DEFAULT_THEME_ID: ThemeId = "classic";
 export const appThemes: AppTheme[] = [
   {
     id: "classic",
-    label: "Current Theme",
-    description: "현재 사용 중인 밝은 기본 테마입니다.",
+    label: "Light Theme",
+    description: "Clean light surfaces with blue accents.",
     appearance: "light",
+    branding: {
+      wordmarkSrc: "/branding/revalue-light.png",
+    },
     palette: {
       background: "#f5f7fb",
       surface: "#ffffff",
@@ -47,10 +53,36 @@ export const appThemes: AppTheme[] = [
     },
   },
   {
+    id: "green",
+    label: "Green Theme",
+    description: "Warm ivory surfaces with calm green highlights.",
+    appearance: "light",
+    branding: {
+      wordmarkSrc: "/branding/revalue-green.png",
+    },
+    palette: {
+      background: "#f7f4ea",
+      surface: "#fffdf7",
+      primary: "#3f7440",
+      accent: "#8baa5e",
+      danger: "#cf5b5b",
+    },
+    preview: {
+      shell: "linear-gradient(135deg, #fcfaf4 0%, #f4efdf 100%)",
+      sidebar: "#fffaf0",
+      panel: "#fffdf7",
+      highlight: "#dce8c9",
+      text: "#1c241b",
+    },
+  },
+  {
     id: "theme-2",
-    label: "Theme 2",
-    description: "요청하신 다크 대시보드 톤입니다. 보라와 민트 포인트를 사용합니다.",
+    label: "Dark Theme",
+    description: "Deep dark surfaces with vivid neon accents.",
     appearance: "dark",
+    branding: {
+      wordmarkSrc: "/branding/revalue-dark.png",
+    },
     palette: {
       background: "#0d1117",
       surface: "#1a2230",

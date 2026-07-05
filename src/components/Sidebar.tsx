@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import BrandMark from "./BrandMark";
+import BrandWordmark from "./BrandWordmark";
 
 const navItems = [
   { href: "/", label: "대시보드", icon: "home", disabled: false },
@@ -114,15 +116,10 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
 
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
-      <div className="p-6 pb-2 flex items-center gap-2">
-        <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center">
-          <Icon name="check" className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <div className="font-bold text-gray-900 text-base leading-tight">VR</div>
-          <div className="text-[10px] tracking-widest text-gray-400 font-semibold">REBALANCING</div>
-        </div>
-      </div>
+      <Link href="/" onClick={onClose} className="flex items-center gap-3 px-6 pb-2 pt-6">
+        <BrandMark className="h-11 w-11 rounded-2xl text-xl" />
+        <BrandWordmark className="h-7 w-auto" priority />
+      </Link>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {

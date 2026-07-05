@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Sidebar, { Icon } from "./Sidebar";
+import BrandWordmark from "./BrandWordmark";
 
 interface HeaderProps {
   title: string;
@@ -11,6 +12,7 @@ interface HeaderProps {
 export default function Header({ title, rightSlot }: HeaderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const showWordmark = title === "ReValue";
 
   return (
     <>
@@ -23,17 +25,20 @@ export default function Header({ title, rightSlot }: HeaderProps) {
         </div>
       )}
 
-      <header className="h-16 bg-white border-b border-gray-200 grid grid-cols-3 items-center px-4 sm:px-6 sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition"
           >
             <Icon name="menu" className="w-5 h-5 text-gray-600" />
           </button>
+          {showWordmark ? (
+            <BrandWordmark className="h-6 w-auto sm:h-7" priority />
+          ) : (
+            <h1 className="truncate text-base font-bold text-gray-900 sm:text-lg">{title}</h1>
+          )}
         </div>
-
-        <h1 className="text-base sm:text-lg font-bold text-gray-900 text-center">{title}</h1>
 
         <div className="flex items-center justify-end gap-2">
           {rightSlot}

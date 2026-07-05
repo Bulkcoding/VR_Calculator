@@ -28,6 +28,34 @@
   --gradient-to: #6366f1;
 }
 
+html[data-theme="green"] {
+  --background: #f7f4ea;
+  --foreground: #1c241b;
+  --card: #fffdf7;
+  --surface-muted: #f7f2e6;
+  --surface-subtle: #efe8d7;
+  --border: #e4dcc8;
+  --border-subtle: #efe7d8;
+  --border-strong: #d3c9ae;
+  --muted: #687163;
+  --muted-strong: #42513f;
+  --muted-soft: #8a9381;
+  --muted-faint: #b8bea9;
+  --accent-blue: #3f7440;
+  --accent-indigo: #8baa5e;
+  --accent-blue-strong: #315d33;
+  --accent-blue-soft: rgba(63, 116, 64, 0.12);
+  --accent-blue-soft-strong: rgba(63, 116, 64, 0.2);
+  --accent-green: #648c49;
+  --accent-green-soft: rgba(100, 140, 73, 0.14);
+  --accent-red: #cf5b5b;
+  --accent-red-soft: rgba(207, 91, 91, 0.14);
+  --accent-yellow: #b79b49;
+  --accent-yellow-soft: rgba(183, 155, 73, 0.18);
+  --gradient-from: #3f7440;
+  --gradient-to: #8baa5e;
+}
+
 html[data-theme="theme-2"] {
   --background: #09111d;
   --foreground: #f4f7fb;
@@ -77,6 +105,12 @@ html[data-theme="theme-2"] body {
     radial-gradient(circle at top right, rgba(71, 227, 213, 0.08), transparent 18%);
 }
 
+html[data-theme="green"] body {
+  background-image:
+    radial-gradient(circle at top left, rgba(110, 150, 96, 0.14), transparent 20%),
+    radial-gradient(circle at top right, rgba(183, 155, 73, 0.08), transparent 18%);
+}
+
 html[data-theme] .bg-\[\#f5f7fb\] {
   background-color: var(--background) !important;
 }
@@ -109,6 +143,7 @@ html[data-theme] .bg-blue-100 {
   background-color: var(--accent-blue-soft-strong) !important;
 }
 
+html[data-theme] .bg-blue-500,
 html[data-theme] .bg-blue-600 {
   background-color: var(--accent-blue) !important;
 }
@@ -143,6 +178,10 @@ html[data-theme] .border-gray-300 {
 
 html[data-theme] .border-blue-200 {
   border-color: var(--accent-blue-soft-strong) !important;
+}
+
+html[data-theme] .border-blue-300 {
+  border-color: color-mix(in srgb, var(--accent-blue) 35%, transparent) !important;
 }
 
 html[data-theme] .border-red-200 {
@@ -239,6 +278,10 @@ html[data-theme] .hover\:bg-blue-100:hover {
   background-color: var(--accent-blue-soft-strong) !important;
 }
 
+html[data-theme] .hover\:border-blue-400:hover {
+  border-color: color-mix(in srgb, var(--accent-blue) 50%, transparent) !important;
+}
+
 html[data-theme] .hover\:bg-blue-700:hover {
   background-color: var(--accent-blue-strong) !important;
 }
@@ -270,13 +313,19 @@ html[data-theme] .hover\:text-red-500:hover {
   color: var(--accent-red) !important;
 }
 
-html[data-theme] .from-blue-500 {
+html[data-theme] .from-blue-500,
+html[data-theme] .from-sky-600 {
   --tw-gradient-from: var(--gradient-from) var(--tw-gradient-from-position) !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
 
-html[data-theme] .to-indigo-600 {
+html[data-theme] .to-indigo-600,
+html[data-theme] .to-indigo-700 {
   --tw-gradient-to: var(--gradient-to) var(--tw-gradient-to-position) !important;
+}
+
+html[data-theme] .border-t-blue-600 {
+  border-top-color: var(--accent-blue) !important;
 }
 
 * {

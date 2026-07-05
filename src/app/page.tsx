@@ -10,6 +10,8 @@ import DashboardShell from "@/components/DashboardShell";
 import StatCard from "@/components/StatCard";
 import RingProgress from "@/components/RingProgress";
 import Sparkline from "@/components/Sparkline";
+import BrandMark from "@/components/BrandMark";
+import BrandWordmark from "@/components/BrandWordmark";
 import ActivityItem from "@/components/ActivityItem";
 import ContextMenu from "@/components/ContextMenu";
 import EditHoldingForm from "@/components/EditHoldingForm";
@@ -60,13 +62,8 @@ function LoginView({ onRegister }: { onRegister: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-[#f5f7fb] px-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-          </div>
-          <div className="text-left">
-            <div className="font-bold text-gray-900 text-lg leading-tight">VR</div>
-            <div className="text-[10px] tracking-widest text-gray-400 font-semibold">REBALANCING</div>
-          </div>
+          <BrandMark />
+          <BrandWordmark className="h-8 w-auto" priority />
         </div>
         <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4 shadow-sm">
           <input type="email" placeholder="이메일" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}

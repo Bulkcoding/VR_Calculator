@@ -10,8 +10,8 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "VR 리밸런싱",
-  description: "주식 밸류 리밸런싱(VR) 계산·정리 웹앱",
+  title: "ReValue",
+  description: "ReValue portfolio dashboard and rebalancing workspace.",
 };
 
 export default function RootLayout({

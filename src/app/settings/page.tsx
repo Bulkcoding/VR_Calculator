@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import BrandWordmark from "@/components/BrandWordmark";
 import DashboardShell from "@/components/DashboardShell";
 import { useTheme } from "@/components/ThemeProvider";
 import type { AppTheme } from "@/lib/themes";
@@ -36,6 +37,9 @@ function ThemeCard({
             </span>
           </div>
           <p className="mt-1 text-sm text-gray-500">{theme.description}</p>
+          <div className="mt-3 inline-flex rounded-xl border border-gray-200 bg-white/80 px-3 py-2">
+            <BrandWordmark themeId={theme.id} className="h-5 w-auto" />
+          </div>
         </div>
         <span
           className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
