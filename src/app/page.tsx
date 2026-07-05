@@ -575,6 +575,7 @@ const formatHoldingBroker = (broker: string) => {
                 <div className="w-14 text-right">보유수량</div>
                 <div className="w-20 text-right">평균단가</div>
                 <div className="w-24 text-right">현재가</div>
+                <div className="hidden sm:block w-24 text-right">평가금액</div>
                 <div className="w-14 text-right">수익률</div>
                 <div className="hidden md:block w-20 text-center">차트</div>
                 <div className="w-4 shrink-0" />
@@ -609,11 +610,14 @@ const formatHoldingBroker = (broker: string) => {
                       <div className="hidden sm:block w-14 text-right text-sm text-gray-700">
                         {h.quantity.toLocaleString(undefined, { maximumFractionDigits: 2 })}주
                       </div>
-                      <div className="hidden sm:block w-20 text-right text-sm text-gray-700">
+                      <div className="hidden sm:block w-24 text-right text-sm text-gray-700">
                         {formatMoney(dispAvg, displayCurrency)}
                       </div>
                       <div className="w-24 text-right text-sm font-semibold text-gray-900">
                         {formatMoney(dispCur, displayCurrency)}
+                      </div>
+                      <div className="hidden sm:block w-24 text-right text-sm text-gray-900">
+                        {formatMoney(dispCur != null ? dispCur * h.quantity : null, displayCurrency)}
                       </div>
                       <div className={`w-14 text-right text-xs font-semibold ${positive ? "text-green-600" : "text-red-500"}`}>
                         {hasPrice ? `${positive ? "+" : ""}${gainPct.toFixed(2)}%` : "—"}
