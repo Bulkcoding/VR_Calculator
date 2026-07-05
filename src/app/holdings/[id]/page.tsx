@@ -61,6 +61,35 @@ const defaultParams: Omit<VrParams, "bandPct"> & { bandPreset: BandPreset } = {
   advanced: false,
 };
 
+const MOBILE_MODE_LABELS: Record<VrMode, string> = {
+  lump: "거",
+  contribution: "적",
+  withdrawal: "인",
+};
+
+function normalizeMode(mode: string): VrMode {
+  if (mode === "contribution" || mode === "withdrawal") return mode;
+  return "lump";
+}
+
+function getModeLabel(mode: string, compact = false) {
+  const normalizedMode = normalizeMode(mode);
+  return compact ? MOBILE_MODE_LABELS[normalizedMode] : MODE_LABELS[normalizedMode];
+}
+
+function formatYymmdd(value: string | null) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  const yy = String(date.getFullYear()).slice(-2);
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+
+  return `${yy}${mm}${dd}`;
+}
+
 function ScheduleTable({
   rows, type, symbol, onUnitChange, capped,
 }: {
@@ -196,14 +225,15 @@ function CycleRow({
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50/50">
-      <td className="px-3 py-3 text-sm font-medium text-gray-900">{cycle.cycleNumber}</td>
-      <td className="px-3 py-3 text-sm text-gray-600">{new Date(cycle.startDate).toLocaleDateString()}</td>
-      <td className="px-3 py-3 text-sm text-gray-600">{cycle.endDate ? new Date(cycle.endDate).toLocaleDateString() : "-"}</td>
-      <td className="px-3 py-3 text-sm">
-        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-700">{MODE_LABELS[(cycle.mode as VrMode) || "lump"]}</span>
+      <td className="px-3 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{cycle.cycleNumber}</td>
+      <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">{formatYymmdd(cycle.startDate)}</td>
+      <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">{formatYymmdd(cycle.endDate)}</td>
+      <td className="px-3 py-3 text-sm whitespace-nowrap">
+        <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-700">{getModeLabel(cycle.mode)}</span>
+        <span className="inline-flex sm:hidden px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-700">{getModeLabel(cycle.mode, true)}</span>
       </td>
-      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.startEval)}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">
+      <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">{fmt(cycle.startEval)}</td>
+      <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
         {editingEnd ? (
           <div className="flex items-center gap-1">
             <input type="number" value={endPrice} onChange={(e) => setEndPrice(Number(e.target.value))} className="w-16 px-1 py-0.5 border border-gray-200 rounded text-xs" />
@@ -216,20 +246,20 @@ function CycleRow({
           <span onClick={() => setEditingEnd(true)} className="cursor-pointer hover:text-blue-600">{fmt(cycle.endEval)}</span>
         )}
       </td>
-      <td className="px-3 py-3 text-sm font-semibold text-gray-900">{fmt(cycle.vValue)}</td>
-      <td className="px-3 py-3 text-sm text-gray-600">±{cycle.bandPreset}%</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.minBand)}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.maxBand)}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.startPool)}</td>
-      <td className="px-3 py-3 text-sm text-gray-900">{fmt(cycle.endPool)}</td>
-      <td className="px-3 py-3 text-sm">
+      <td className="px-3 py-3 text-sm font-semibold text-gray-900 whitespace-nowrap">{fmt(cycle.vValue)}</td>
+      <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">±{cycle.bandPreset}%</td>
+      <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">{fmt(cycle.minBand)}</td>
+      <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">{fmt(cycle.maxBand)}</td>
+      <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">{fmt(cycle.startPool)}</td>
+      <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">{fmt(cycle.endPool)}</td>
+      <td className="px-3 py-3 text-sm whitespace-nowrap">
         {cycle.endDate ? (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">완료</span>
         ) : (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-50 text-green-700">진행 중</span>
         )}
       </td>
-      <td className="px-3 py-3 text-sm">
+      <td className="px-3 py-3 text-sm whitespace-nowrap">
         {editing ? (
           <div className="flex gap-1">
             <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
@@ -382,9 +412,12 @@ export default function VrEditorPage() {
     <DashboardShell
       title="리밸런싱"
       rightSlot={
-        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">
+        <button
+          aria-label="더보기"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 sm:px-3"
+        >
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
-          더보기
+          <span className="hidden sm:inline">더보기</span>
         </button>
       }
     >
@@ -452,45 +485,45 @@ export default function VrEditorPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-        <div className="flex items-center justify-between mb-5">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-gray-900">VR 파라미터</h2>
+            <h2 className="text-base font-semibold text-gray-900">파라미터</h2>
             <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap">
             <button onClick={startCycle} disabled={startingCycle || !!activeCycle}
-              className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition disabled:opacity-50">
-              {activeCycle ? `${activeCycle.cycleNumber}차 진행중` : startingCycle ? "시작중..." : "🔄 새 사이클 시작"}
+              className="min-w-0 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-green-700 disabled:opacity-50">
+              {activeCycle ? `${activeCycle.cycleNumber}차 진행중` : startingCycle ? "시작중..." : "사이클 시작"}
             </button>
             <button onClick={save} disabled={saving}
-              className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition disabled:opacity-50">
-              {saving ? "저장중..." : "파라미터 저장"}
+              className="min-w-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">
+              {saving ? "저장중..." : "저장"}
             </button>
-            <button className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition">
-              기반값 불러오기
+            <button className="min-w-0 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
+              초기화
             </button>
           </div>
         </div>
 
-        <div className="mb-4 flex items-center gap-3 flex-wrap">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
           <span className="text-xs text-gray-500 font-semibold">계산 모드</span>
           {(["lump", "contribution", "withdrawal"] as VrMode[]).map((m) => (
             <button key={m} onClick={() => updateParam("mode", m)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+              className={`min-w-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
                 params.mode === m
                   ? modeBg[m] + " border-current"
                   : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
               }`}>
-              {MODE_LABELS[m]}
+              <span className="hidden sm:inline">{MODE_LABELS[m]}</span>
+              <span className="sm:hidden">{getModeLabel(m, true)}</span>
             </button>
           ))}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:ml-auto">
             <span className="text-xs text-gray-500 font-semibold">심화 계산식</span>
             <button onClick={() => updateParam("advanced", !params.advanced)}
               className={`relative w-9 h-5 rounded-full transition ${params.advanced ? "bg-blue-600" : "bg-gray-200"}`}>
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition ${params.advanced ? "translate-x-4" : ""}`} />
             </button>
-            <span className="text-xs text-gray-400">V2 = 21 + pool/G + (E-V1)/2√10</span>
           </div>
         </div>
 
@@ -664,7 +697,7 @@ export default function VrEditorPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-base font-semibold text-gray-900">사이클 기록</h3>
           {cycles.length > 0 && (
             <button onClick={() => {
@@ -678,8 +711,9 @@ export default function VrEditorPage() {
               const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
               const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `vr-cycles-${holding?.ticker || id}.csv`;
               a.click(); URL.revokeObjectURL(a.href);
-            }} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 transition">
-              CSV 내보내기
+            }} className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 transition hover:bg-gray-50 sm:w-auto">
+              <span className="hidden sm:inline">CSV 내보내기</span>
+              <span className="sm:hidden">CSV</span>
             </button>
           )}
         </div>
@@ -688,24 +722,24 @@ export default function VrEditorPage() {
           <p className="text-sm text-gray-400 text-center py-8">아직 기록된 사이클이 없습니다.</p>
         ) : (
           <div className="overflow-x-auto -mx-5">
-            <table className="w-full text-sm">
+            <table className="min-w-[920px] w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-gray-500 text-xs">
-                  <th className="px-3 py-2">#</th>
-                  <th className="px-3 py-2">시작일</th>
-                  <th className="px-3 py-2">종료일</th>
-                  <th className="px-3 py-2">모드</th>
-                  <th className="px-3 py-2">시작평가금</th>
-                  <th className="px-3 py-2">마지막평가금</th>
-                  <th className="px-3 py-2">V</th>
-                  <th className="px-3 py-2">밴드</th>
-                  <th className="px-3 py-2">최소밴드</th>
-                  <th className="px-3 py-2">최대밴드</th>
-                  <th className="px-3 py-2">시작 pool</th>
-                  <th className="px-3 py-2">마지막 pool</th>
-                  <th className="px-3 py-2">상태</th>
-                  <th className="px-3 py-2">비고</th>
-                  <th className="px-3 py-2"></th>
+                  <th className="px-3 py-2 whitespace-nowrap">#</th>
+                  <th className="px-3 py-2 whitespace-nowrap">시작일</th>
+                  <th className="px-3 py-2 whitespace-nowrap">종료일</th>
+                  <th className="px-3 py-2 whitespace-nowrap">모드</th>
+                  <th className="px-3 py-2 whitespace-nowrap">시작평가금</th>
+                  <th className="px-3 py-2 whitespace-nowrap">마지막평가금</th>
+                  <th className="px-3 py-2 whitespace-nowrap">V</th>
+                  <th className="px-3 py-2 whitespace-nowrap">밴드</th>
+                  <th className="px-3 py-2 whitespace-nowrap">최소밴드</th>
+                  <th className="px-3 py-2 whitespace-nowrap">최대밴드</th>
+                  <th className="px-3 py-2 whitespace-nowrap">시작 pool</th>
+                  <th className="px-3 py-2 whitespace-nowrap">마지막 pool</th>
+                  <th className="px-3 py-2 whitespace-nowrap">상태</th>
+                  <th className="px-3 py-2 whitespace-nowrap">비고</th>
+                  <th className="px-3 py-2 whitespace-nowrap"></th>
                 </tr>
               </thead>
               <tbody>
