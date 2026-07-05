@@ -714,7 +714,7 @@ const formatHoldingBroker = (broker: string) => {
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
                     </span>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-600 to-indigo-700 flex items-center justify-center text-white text-xs font-extrabold shrink-0 shadow-md">
                       {w.ticker.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
