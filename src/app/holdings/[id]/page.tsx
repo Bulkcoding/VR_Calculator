@@ -445,8 +445,8 @@ export default function VrEditorPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
         <StatCard label="평가금액" value={hasPrice ? `$${(holding?.currentPrice! * (holding?.quantity || 0)).toFixed(2)}` : "—"} subtext="전일 대비 +2.35%" />
-        <StatCard label="평가손익" value={`+$${Math.abs(gainAmount).toFixed(2)}`} subtext="전일 대비 +$12.34" accent="green" changePositive />
-        <StatCard label="수익률" value={`+${gainPct.toFixed(2)}%`} subtext="전일 대비 +2.11%" accent="green" changePositive />
+        <StatCard label="평가손익" value={`${positive ? "+" : "-"}$${Math.abs(gainAmount).toFixed(2)}`} accent={positive ? "green" : "red"} changePositive={positive} />
+        <StatCard label="수익률" value={`${positive ? "+" : ""}${gainPct.toFixed(2)}%`} accent={positive ? "green" : "red"} changePositive={positive} />
         <StatCard label="보유수량" value={`${holding?.quantity || 0} 주`} subtext={`주문 가능 ${(holding?.quantity || 0)} 주`} />
         <StatCard label="현재 Pool" value={`$${params.pool.toLocaleString()}`} subtext="사용 가능 (75%까지 매수)" accent="blue" />
       </div>
