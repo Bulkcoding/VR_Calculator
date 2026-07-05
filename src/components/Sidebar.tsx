@@ -159,7 +159,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
           onClick={() => signOut()}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition"
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-semibold">
+          <div className="theme-gradient-badge w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold">
             {session?.user?.name?.[0] || session?.user?.email?.[0]?.toUpperCase() || "U"}
           </div>
           <div className="flex-1 text-left">

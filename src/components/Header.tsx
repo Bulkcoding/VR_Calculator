@@ -77,7 +77,7 @@ export default function Header({ title, rightSlot }: HeaderProps) {
             )}
           </div>
 
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-semibold">
+          <div className="theme-gradient-badge w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold">
             U
           </div>
         </div>

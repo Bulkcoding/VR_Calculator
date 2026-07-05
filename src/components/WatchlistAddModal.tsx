@@ -90,7 +90,7 @@ export default function WatchlistAddModal({ onClose, onAdded, existingTickers = 
                   const already = added.has(r.ticker);
                   return (
                     <div key={r.ticker} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                      <div className="theme-gradient-badge w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0">
                         {r.ticker.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
