@@ -16,6 +16,7 @@ import EditHoldingForm from "@/components/EditHoldingForm";
 import BrokerConnectionModal from "@/components/BrokerConnectionModal";
 import WatchlistAddModal from "@/components/WatchlistAddModal";
 import MarketStatusBadge from "@/components/MarketStatusBadge";
+import MarketInsightsPanel from "@/components/MarketInsightsPanel";
 import { CurrencyToggle, convertAmount, formatMoney, type DisplayCurrency } from "@/components/CurrencyToggle";
 
 
@@ -767,6 +768,8 @@ const formatHoldingBroker = (broker: string) => {
         </div>
       </CardShell>
       </div>
+
+      <MarketInsightsPanel />
 
       {menu && (
         <ContextMenu
