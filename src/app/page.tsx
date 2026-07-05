@@ -440,7 +440,7 @@ const formatHoldingBroker = (broker: string) => {
 
   return (
     <DashboardShell
-      title="ReValue"
+      title=""
       rightSlot={
         <div className="flex items-center gap-2">
           <button
@@ -453,6 +453,7 @@ const formatHoldingBroker = (broker: string) => {
       }
     >
       <div className="mb-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">ReValue</h1>
         <MarketStatusBadge />
       </div>
 
