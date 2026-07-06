@@ -7,10 +7,11 @@ import BrandWordmark from "./BrandWordmark";
 interface HeaderProps {
   title: string;
   subtitle?: string;
+  hideBrand?: boolean;
   rightSlot?: React.ReactNode;
 }
 
-export default function Header({ title, subtitle, rightSlot }: HeaderProps) {
+export default function Header({ title, subtitle, hideBrand, rightSlot }: HeaderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
 
@@ -33,12 +34,12 @@ export default function Header({ title, subtitle, rightSlot }: HeaderProps) {
           >
             <Icon name="menu" className="w-5 h-5 text-gray-600" />
           </button>
-          <BrandWordmark className="h-auto w-[150px] sm:w-[210px]" priority />
+          {!hideBrand && <BrandWordmark className="h-auto w-[150px] sm:w-[210px]" priority />}
         </div>
 
-        {subtitle && (
+        {title && (
           <div className="pointer-events-none absolute inset-x-0 flex justify-center px-20 sm:px-28">
-            <p className="truncate text-xs font-medium text-gray-500">{subtitle}</p>
+            <h1 className="truncate text-base font-bold text-gray-900 sm:text-lg">{title}</h1>
           </div>
         )}
 

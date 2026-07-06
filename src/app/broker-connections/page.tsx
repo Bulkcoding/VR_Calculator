@@ -81,8 +81,8 @@ export default function BrokerConnectionsPage() {
 
   return (
     <DashboardShell
-      title=""
-      subtitle="증권사 연동"
+      title="증권사 연동"
+      hideBrand
       rightSlot={
         <div className="flex items-center gap-2">
           <button

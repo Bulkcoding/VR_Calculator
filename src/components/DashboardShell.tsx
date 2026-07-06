@@ -7,18 +7,19 @@ import ThemeQuickSwitch from "./ThemeQuickSwitch";
 interface DashboardShellProps {
   title: string;
   subtitle?: string;
+  hideBrand?: boolean;
   rightSlot?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export default function DashboardShell({ title, subtitle, rightSlot, children }: DashboardShellProps) {
+export default function DashboardShell({ title, subtitle, hideBrand, rightSlot, children }: DashboardShellProps) {
   return (
     <div className="flex min-h-screen">
       <div className="hidden lg:block">
         <Sidebar />
       </div>
       <div className="flex-1 flex flex-col min-w-0">
-        <Header title={title} subtitle={subtitle} rightSlot={rightSlot} />
+        <Header title={title} subtitle={subtitle} hideBrand={hideBrand} rightSlot={rightSlot} />
         <main className="flex-1 w-full max-w-[1400px] mx-auto p-4 pb-24 sm:p-6 sm:pb-24">{children}</main>
       </div>
       <ThemeQuickSwitch />
