@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar, { Icon } from "./Sidebar";
 import BrandWordmark from "./BrandWordmark";
 
@@ -14,6 +14,12 @@ interface HeaderProps {
 export default function Header({ title, subtitle, hideBrand, rightSlot }: HeaderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const unreadCount = notifications.filter((n) => !n.read).length;
+  useEffect(() => {
+    if (!notifOpen) return;
+    fetch("/api/notifications").then((r) => r.json()).then(setNotifications).catch(() => {});
+  }, [notifOpen]);
 
   return (
     <>
@@ -52,7 +58,7 @@ export default function Header({ title, subtitle, hideBrand, rightSlot }: Header
               className="relative p-2 rounded-lg hover:bg-gray-100 transition"
             >
               <Icon name="bell-filled" className="w-5 h-5 text-gray-500" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+              {unreadCount > 0 && (<span className="absolute top-1.5 right-1.5 min-w-[14px] h-4 px-1 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">{unreadCount > 9 ? "9+" : unreadCount}</span>)}
             </button>
 
             {notifOpen && (
@@ -61,19 +67,25 @@ export default function Header({ title, subtitle, hideBrand, rightSlot }: Header
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden">
                   <div className="px-4 py-3 border-b border-gray-100 font-semibold text-sm text-gray-900">알림</div>
                   <div className="max-h-96 overflow-y-auto">
-                    {[
-                      { type: "buy", msg: "TQQQ 매수 신호 발생", time: "11:30", color: "bg-green-100 text-green-600" },
-                      { type: "sell", msg: "SOXL 매도 신호 발생", time: "09:20", color: "bg-red-100 text-red-600" },
-                      { type: "rebalance", msg: "리밸런싱 완료", time: "어제 16:10", color: "bg-blue-100 text-blue-600" },
-                    ].map((n, i) => (
-                      <div key={i} className="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full ${n.color.split(" ")[0]}`} />
-                          <div className="flex-1 text-sm text-gray-700">{n.msg}</div>
-                          <div className="text-xs text-gray-400">{n.time}</div>
-                        </div>
-                      </div>
-                    ))}
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-xs text-gray-400">알림이 없습니다.</div>
+                    ) : (
+                      notifications.map(function(n) {
+                        var c = n.type === "cycle_start" ? "bg-blue-100" : n.type === "buy_signal" || n.type === "sell_signal" ? "bg-green-100" : n.type === "cycle_end_soon" ? "bg-amber-100" : "bg-gray-100";
+                        return (
+                          <div key={n.id} className="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer">
+                            <div className="flex items-center gap-3">
+                              <div className={"w-2 h-2 rounded-full " + c} />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-semibold text-gray-900 truncate">{n.title}</div>
+                                <div className="text-[11px] text-gray-500 truncate">{n.message}</div>
+                              </div>
+                              <div className="text-[10px] text-gray-400 shrink-0">{new Date(n.createdAt).toLocaleDateString()}</div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               </>
