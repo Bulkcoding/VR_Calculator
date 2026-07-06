@@ -38,7 +38,7 @@ export default function Header({ title, subtitle, hideBrand, rightSlot }: Header
         </div>
 
         {title && (
-          <div className="pointer-events-none absolute inset-x-0 flex justify-center px-20 sm:px-28">
+          <div className="flex-1 min-w-0 px-4 sm:absolute sm:inset-x-0 sm:flex sm:justify-center sm:px-28">
             <h1 className="truncate text-base font-bold text-gray-900 sm:text-lg">{title}</h1>
           </div>
         )}
