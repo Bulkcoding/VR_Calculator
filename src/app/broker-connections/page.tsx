@@ -11,16 +11,16 @@ import { getBrokerLogoPath } from "@/lib/brokerLogos";
 const ALL_BROKERS = [
   { id: "kis", name: "한국투자증권", shortName: "KIS", color: "bg-blue-600", supportsImport: true },
   { id: "toss", name: "토스증권", shortName: "TS", color: "bg-blue-500", supportsImport: true },
-  { id: "samsung", name: "삼성증권", shortName: "SS", color: "bg-orange-500", supportsImport: false },
-  { id: "kb", name: "KB증권", shortName: "KB", color: "bg-yellow-500", supportsImport: false },
-  { id: "mirae", name: "미래에셋증권", shortName: "MA", color: "bg-teal-600", supportsImport: false },
-  { id: "nh", name: "NH투자증권", shortName: "NH", color: "bg-green-600", supportsImport: false },
-  { id: "shinhan", name: "신한투자증권", shortName: "SH", color: "bg-blue-700", supportsImport: false },
-  { id: "daishin", name: "대신증권", shortName: "DS", color: "bg-gray-600", supportsImport: false },
-  { id: "hana", name: "하나증권", shortName: "HA", color: "bg-emerald-600", supportsImport: false },
-  { id: "yuanta", name: "유안타증권", shortName: "YT", color: "bg-red-500", supportsImport: false },
-  { id: "eugene", name: "유진투자증권", shortName: "EG", color: "bg-purple-600", supportsImport: false },
-  { id: "other", name: "기타 증권사", shortName: "•••", color: "bg-gray-400", supportsImport: false },
+  // { id: "samsung", name: "삼성증권", shortName: "SS", color: "bg-orange-500", supportsImport: false },
+  // { id: "kb", name: "KB증권", shortName: "KB", color: "bg-yellow-500", supportsImport: false },
+  // { id: "mirae", name: "미래에셋증권", shortName: "MA", color: "bg-teal-600", supportsImport: false },
+  // { id: "nh", name: "NH투자증권", shortName: "NH", color: "bg-green-600", supportsImport: false },
+  // { id: "shinhan", name: "신한투자증권", shortName: "SH", color: "bg-blue-700", supportsImport: false },
+  // { id: "daishin", name: "대신증권", shortName: "DS", color: "bg-gray-600", supportsImport: false },
+  // { id: "hana", name: "하나증권", shortName: "HA", color: "bg-emerald-600", supportsImport: false },
+  // { id: "yuanta", name: "유안타증권", shortName: "YT", color: "bg-red-500", supportsImport: false },
+  // { id: "eugene", name: "유진투자증권", shortName: "EG", color: "bg-purple-600", supportsImport: false },
+  // { id: "other", name: "기타 증권사", shortName: "•••", color: "bg-gray-400", supportsImport: false },
 ];
 
 interface ConnectedBroker {
