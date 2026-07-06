@@ -422,8 +422,25 @@ export default function VrEditorPage() {
         </button>
       }
     >
-      <div className="mb-2">
-        <Link href="/" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">← 리밸런싱</Link>
+      <div className="mb-4">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:text-gray-900"
+        >
+          <svg
+            className="h-4 w-4 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M15 18l-6-6 6-6" />
+            <path d="M9 12h8" />
+          </svg>
+          <span>이전</span>
+        </Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">

@@ -8,6 +8,7 @@ import BrandWordmark from "./BrandWordmark";
 const navItems = [
   { href: "/", label: "대시보드", icon: "home", disabled: false },
   { href: "/watchlist", label: "관심종목", icon: "star", disabled: false },
+  { href: "/themes", label: "테마별 주식", icon: "folder", disabled: false },
   // { href: "/portfolio", label: "포트폴리오", icon: "folder", disabled: true },
   // { href: "/rebalancing", label: "리밸런싱", icon: "refresh", disabled: true },
   // { href: "/cycles", label: "사이클 기록", icon: "clock", disabled: true },

@@ -8,7 +8,7 @@ import {
   type NaverGroupStock,
 } from "@/lib/naverMarketApi";
 
-export interface ThemeRanking {
+export interface ThemeSummary {
   id: string;
   name: string;
   changeRate: number;
@@ -16,10 +16,11 @@ export interface ThemeRanking {
   upCount: number;
   flatCount: number;
   downCount: number;
-  stocks: NaverGroupStock[];
 }
 
-type ThemeSummary = Omit<ThemeRanking, "stocks">;
+export interface ThemeRanking extends ThemeSummary {
+  stocks: NaverGroupStock[];
+}
 
 function parseThemeList(html: string, limit: number): ThemeSummary[] {
   const themes: ThemeSummary[] = [];
@@ -45,20 +46,62 @@ function parseThemeList(html: string, limit: number): ThemeSummary[] {
   return themes;
 }
 
-export async function fetchThemeRankings(limit = 6): Promise<ThemeRanking[]> {
+export async function fetchThemeSummaries(limit = 6): Promise<ThemeSummary[]> {
   const listHtml = await fetchNaverHtml("/sise/theme.naver?field=change_rate&ordering=desc");
   const themes = parseThemeList(listHtml, limit);
+
   if (themes.length === 0) {
     throw new Error("Naver Finance theme table could not be parsed");
   }
 
+  return themes;
+}
+
+export async function fetchThemeStocks(themeId: string, limit = 3): Promise<NaverGroupStock[]> {
+  const detailHtml = await fetchNaverHtml(`/sise/sise_group_detail.naver?type=theme&no=${themeId}`);
+  return parseGroupStocks(detailHtml, limit);
+}
+
+export async function fetchThemeExplorerData(
+  selectedThemeId?: string,
+  summaryLimit = 20,
+  stockLimit = 24,
+): Promise<{ themes: ThemeSummary[]; selectedTheme: ThemeRanking | null }> {
+  const themes = await fetchThemeSummaries(summaryLimit);
+  const summary = themes.find((theme) => theme.id === selectedThemeId) ?? themes[0] ?? null;
+
+  if (!summary) {
+    return { themes: [], selectedTheme: null };
+  }
+
+  try {
+    const stocks = await fetchThemeStocks(summary.id, stockLimit);
+    return {
+      themes,
+      selectedTheme: {
+        ...summary,
+        stocks,
+      },
+    };
+  } catch {
+    return {
+      themes,
+      selectedTheme: {
+        ...summary,
+        stocks: [],
+      },
+    };
+  }
+}
+
+export async function fetchThemeRankings(limit = 6): Promise<ThemeRanking[]> {
+  const themes = await fetchThemeSummaries(limit);
+
   return Promise.all(
     themes.map(async (theme) => {
       try {
-        const detailHtml = await fetchNaverHtml(
-          `/sise/sise_group_detail.naver?type=theme&no=${theme.id}`
-        );
-        return { ...theme, stocks: parseGroupStocks(detailHtml) };
+        const stocks = await fetchThemeStocks(theme.id);
+        return { ...theme, stocks };
       } catch {
         return { ...theme, stocks: [] };
       }

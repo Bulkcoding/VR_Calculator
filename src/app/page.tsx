@@ -19,6 +19,7 @@ import BrokerConnectionModal from "@/components/BrokerConnectionModal";
 import WatchlistAddModal from "@/components/WatchlistAddModal";
 import MarketStatusBadge from "@/components/MarketStatusBadge";
 import MarketInsightsPanel from "@/components/MarketInsightsPanel";
+import CycleEndingAlertModal, { type CycleEndingAlertData } from "@/components/CycleEndingAlertModal";
 import { CurrencyToggle, convertAmount, formatMoney, type DisplayCurrency } from "@/components/CurrencyToggle";
 
 
@@ -46,6 +47,8 @@ interface ChartInfo {
   changePct: number | null;
   spark: number[];
 }
+
+const CYCLE_ALERT_DISMISSED_KEY = "dashboard-cycle-alert-dismissed";
 
 function LoginView({ onRegister }: { onRegister: () => void }) {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -181,6 +184,7 @@ export default function DashboardPage() {
   const [fxRate, setFxRate] = useState<number | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
   const [syncResult, setSyncResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [cycleAlert, setCycleAlert] = useState<CycleEndingAlertData | null>(null);
 
   // 표시 통화 선택을 localStorage에 보존
   useEffect(() => {
@@ -245,6 +249,25 @@ const formatHoldingBroker = (broker: string) => {
   const fetchWatchCharts = useCallback(async () => {
     const res = await fetch("/api/watchlist/charts");
     if (res.ok) setWatchCharts(await res.json());
+  }, []);
+
+  const fetchCycleAlert = useCallback(async () => {
+    const res = await fetch("/api/dashboard/cycle-alert");
+    if (!res.ok) {
+      setCycleAlert(null);
+      return;
+    }
+
+    const data = await res.json();
+    const alert = (data?.alert ?? null) as CycleEndingAlertData | null;
+
+    if (!alert) {
+      setCycleAlert(null);
+      return;
+    }
+
+    const dismissedCycleId = window.localStorage.getItem(CYCLE_ALERT_DISMISSED_KEY);
+    setCycleAlert(dismissedCycleId === alert.cycleId ? null : alert);
   }, []);
 
   const removeWatch = async (ticker: string) => {
@@ -342,6 +365,13 @@ const formatHoldingBroker = (broker: string) => {
     setSyncingAll(false);
   };
 
+  const dismissCycleAlert = useCallback((cycleId?: string) => {
+    if (cycleId) {
+      window.localStorage.setItem(CYCLE_ALERT_DISMISSED_KEY, cycleId);
+    }
+    setCycleAlert(null);
+  }, []);
+
   useEffect(() => {
     if (status === "authenticated") {
       // 최초 1회: 현재가 + 차트 + 환율 로드
@@ -350,6 +380,7 @@ const formatHoldingBroker = (broker: string) => {
       fetchHoldingSparks();
       fetchWatchCharts();
       fetchFx();
+      fetchCycleAlert();
       // 현재가/수익률/환율: 30초 주기
       const priceInterval = setInterval(() => {
         refreshPrices();
@@ -378,7 +409,7 @@ const formatHoldingBroker = (broker: string) => {
         clearInterval(brokerSyncInterval);
       };
     }
-  }, [status, refreshPrices, fetchWatchlist, fetchHoldingSparks, fetchWatchCharts, fetchFx, fetchHoldings]);
+  }, [status, refreshPrices, fetchWatchlist, fetchHoldingSparks, fetchWatchCharts, fetchFx, fetchHoldings, fetchCycleAlert]);
 
   const addHolding = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -771,6 +802,17 @@ const formatHoldingBroker = (broker: string) => {
       </div>
 
       <MarketInsightsPanel />
+
+      <CycleEndingAlertModal
+        alert={cycleAlert}
+        onClose={() => dismissCycleAlert(cycleAlert?.cycleId)}
+        onLater={() => dismissCycleAlert(cycleAlert?.cycleId)}
+        onDetails={() => {
+          const holdingId = cycleAlert?.holdingId;
+          dismissCycleAlert(cycleAlert?.cycleId);
+          if (holdingId) router.push(`/holdings/${holdingId}`);
+        }}
+      />
 
       {menu && (
         <ContextMenu

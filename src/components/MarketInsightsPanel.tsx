@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { IndustryRanking } from "@/lib/industryApi";
 import type { ThemeRanking } from "@/lib/themeApi";
+
 
 interface RankingResponse<T> {
   updatedAt: string;
@@ -158,7 +160,11 @@ export default function MarketInsightsPanel() {
         {loading ? <LoadingRows /> : themeError ? <ErrorState message={themeError} onRetry={retry} /> : (
           <div className="divide-y divide-gray-100">
             {themes.map((theme, index) => (
-              <article key={theme.id} className="grid gap-3 px-5 py-4 transition-colors hover:bg-sky-50/40 lg:grid-cols-[minmax(0,1.2fr)_110px_110px_minmax(0,2fr)] lg:items-center">
+              <Link
+                key={theme.id}
+                href={`/themes/${theme.id}`}
+                className="grid gap-3 px-5 py-4 transition-colors hover:bg-sky-50/40 focus:bg-sky-50/60 focus:outline-none lg:grid-cols-[minmax(0,1.2fr)_110px_110px_minmax(0,2fr)] lg:items-center"
+              >
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-50 text-xs font-bold text-sky-700">{index + 1}</span>
                   <div className="min-w-0">
@@ -185,7 +191,7 @@ export default function MarketInsightsPanel() {
                     </div>
                   ))}
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         )}
