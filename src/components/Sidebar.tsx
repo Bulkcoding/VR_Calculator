@@ -8,12 +8,12 @@ import BrandWordmark from "./BrandWordmark";
 const navItems = [
   { href: "/", label: "대시보드", icon: "home", disabled: false },
   { href: "/watchlist", label: "관심종목", icon: "star", disabled: false },
-  { href: "/portfolio", label: "포트폴리오", icon: "folder", disabled: true },
-  { href: "/rebalancing", label: "리밸런싱", icon: "refresh", disabled: true },
-  { href: "/cycles", label: "사이클 기록", icon: "clock", disabled: true },
+  // { href: "/portfolio", label: "포트폴리오", icon: "folder", disabled: true },
+  // { href: "/rebalancing", label: "리밸런싱", icon: "refresh", disabled: true },
+  // { href: "/cycles", label: "사이클 기록", icon: "clock", disabled: true },
   { href: "/notifications", label: "알림", icon: "bell", disabled: true },
   { href: "/broker-connections", label: "증권사 연동", icon: "shield", disabled: false },
-  { href: "/api-settings", label: "API 연동", icon: "link", disabled: true },
+  // { href: "/api-settings", label: "API 연동", icon: "link", disabled: true },
   { href: "/settings", label: "설정", icon: "cog", disabled: false },
 ];
 
