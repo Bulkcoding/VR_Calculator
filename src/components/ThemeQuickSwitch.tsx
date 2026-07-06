@@ -25,7 +25,7 @@ export default function ThemeQuickSwitch() {
   }, [open]);
 
   return (
-    <div ref={rootRef} className="fixed bottom-5 right-5 z-40">
+    <div ref={rootRef} className="fixed bottom-5 right-5 z-40 flex flex-col items-end">
       {open ? (
         <div className="mb-3 w-72 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur">
           <div className="mb-2 flex items-center justify-between px-1">
