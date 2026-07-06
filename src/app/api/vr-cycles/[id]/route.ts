@@ -104,6 +104,16 @@ export async function POST(
     },
   });
 
+  // 알림 생성
+  try {
+    const holding = await prisma.holding.findUnique({ where: { id } });
+    if (holding) {
+      await prisma.notification.create({
+        data: { userId, type: "cycle_start", title: "사이클 시작", message: `${holding.name} ${cycleNumber}차 사이클 시작`, holdingId: id, cycleId: cycle.id },
+      });
+    }
+  } catch (_) {}
+
   await prisma.vrStrategy.update({
     where: { holdingId: id },
     data: {
