@@ -26,16 +26,16 @@ const US_REGULAR_BY_SEASON: Record<
   { open: number; close: number; offset: number; timeLabel: string }
 > = {
   summer: {
-    open: 21.5,
-    close: 4,
-    offset: 13,
-    timeLabel: "21:30 ~ 04:00",
-  },
-  standard: {
     open: 22.5,
     close: 5,
-    offset: 14,
+    offset: 13,
     timeLabel: "22:30 ~ 05:00",
+  },
+  standard: {
+    open: 23.5,
+    close: 6,
+    offset: 14,
+    timeLabel: "23:30 ~ 06:00",
   },
 };
 
