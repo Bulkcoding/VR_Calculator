@@ -21,23 +21,37 @@ const KR_REGULAR = {
   timeLabel: "09:00 ~ 15:30",
 };
 
-const US_REGULAR_BY_SEASON: Record<
-  USMarketSeason,
-  { open: number; close: number; offset: number; timeLabel: string }
-> = {
-  summer: {
-    open: 22.5,
-    close: 5,
-    offset: 13,
-    timeLabel: "22:30 ~ 05:00",
-  },
-  standard: {
-    open: 23.5,
-    close: 6,
-    offset: 14,
-    timeLabel: "23:30 ~ 06:00",
-  },
-};
+interface UsSessionDef {
+  id: string;
+  label: string;
+  openET: number;
+  closeET: number;
+}
+
+const US_SESSIONS_ET: UsSessionDef[] = [
+  { id: "us-premarket",  label: "해외 프리마켓",   openET: 4,   closeET: 9.5 },
+  { id: "us-regular",    label: "해외 정규장",     openET: 9.5, closeET: 16 },
+  { id: "us-aftermarket",label: "해외 애프터마켓", openET: 16,  closeET: 20 },
+];
+
+interface UsSessionConverted {
+  id: string;
+  label: string;
+  open: number;
+  close: number;
+  timeLabel: string;
+}
+
+function convertUsSession(s: UsSessionDef, offset: number): UsSessionConverted {
+  const open = (s.openET + offset) % 24;
+  const close = (s.closeET + offset) % 24;
+  const fmt = (n: number) => {
+    const h = Math.floor(n);
+    const m = Math.round((n - h) * 60);
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  };
+  return { id: s.id, label: s.label, open, close, timeLabel: `${fmt(open)} ~ ${fmt(close)}` };
+}
 
 function isUSDST(now: Date): boolean {
   const year = now.getUTCFullYear();
@@ -81,8 +95,8 @@ export function getUSMarketSeason(now: Date = new Date()): USMarketSeason {
 export function getMarketSessions(now: Date = new Date()): MarketSession[] {
   const kstNow = getKstNow(now);
   const usSeason = getUSMarketSeason(now);
-  const usRegularHours = US_REGULAR_BY_SEASON[usSeason];
-  const etNow = new Date(now.getTime() + (9 - usRegularHours.offset) * HOUR_MS);
+  const offset = usSeason === "summer" ? 13 : 14;
+  const etNow = new Date(now.getTime() + (9 - offset) * HOUR_MS);
   const isKrWeekday = kstNow.day >= 1 && kstNow.day <= 5;
   const isUsWeekday = etNow.getUTCDay() >= 1 && etNow.getUTCDay() <= 5;
 
@@ -91,15 +105,14 @@ export function getMarketSessions(now: Date = new Date()): MarketSession[] {
     isOpen: isKrWeekday && inRange(kstNow.h, kstNow.m, KR_REGULAR.open, KR_REGULAR.close),
   };
 
-  const usRegular: MarketSession = {
-    id: "us-regular",
-    label: "미국 정규장",
-    market: "us",
-    open: usRegularHours.open,
-    close: usRegularHours.close,
-    isOpen: isUsWeekday && inRange(kstNow.h, kstNow.m, usRegularHours.open, usRegularHours.close),
-    timeLabel: usRegularHours.timeLabel,
-  };
+  const usSessions: MarketSession[] = US_SESSIONS_ET.map((s) => {
+    const converted = convertUsSession(s, offset);
+    return {
+      ...converted,
+      market: "us" as const,
+      isOpen: isUsWeekday && inRange(kstNow.h, kstNow.m, converted.open, converted.close),
+    };
+  });
 
-  return [krRegular, usRegular];
+  return [krRegular, ...usSessions];
 }

@@ -381,12 +381,12 @@ const formatHoldingBroker = (broker: string) => {
       fetchWatchCharts();
       fetchFx();
       fetchCycleAlert();
-      // 현재가/수익률/환율: 30초 주기
+      // 현재가/수익률/환율: 10초 주기
       const priceInterval = setInterval(() => {
         refreshPrices();
         fetchWatchlist();
         fetchFx();
-      }, 30000);
+      }, 10000);
       // 차트(스파크라인): 60초 주기
       const chartInterval = setInterval(() => {
         fetchHoldingSparks();
