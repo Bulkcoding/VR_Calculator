@@ -12,14 +12,10 @@ export interface MarketSession {
 
 export type USMarketSeason = "summer" | "standard";
 
-const KR_REGULAR = {
-  id: "kr-regular",
-  label: "국내 정규장",
-  market: "kr" as const,
-  open: 9,
-  close: 15.5,
-  timeLabel: "09:00 ~ 15:30",
-};
+const KR_SESSIONS = [
+  { id: "kr-regular", label: "국내 정규장", open: 9, close: 15.5, timeLabel: "09:00 ~ 15:30" },
+  { id: "kr-aftermarket", label: "국내 애프터마켓", open: 15.5, close: 9, timeLabel: "15:30 ~ 09:00" },
+];
 
 interface UsSessionDef {
   id: string;
@@ -100,19 +96,24 @@ export function getMarketSessions(now: Date = new Date()): MarketSession[] {
   const isKrWeekday = kstNow.day >= 1 && kstNow.day <= 5;
   const isUsWeekday = etNow.getUTCDay() >= 1 && etNow.getUTCDay() <= 5;
 
-  const krRegular: MarketSession = {
-    ...KR_REGULAR,
-    isOpen: isKrWeekday && inRange(kstNow.h, kstNow.m, KR_REGULAR.open, KR_REGULAR.close),
+  // 한국: 현재 열린 세션 찾기, 없으면 첫번째(정규장) 표시
+  const krSession = KR_SESSIONS.find((s) => inRange(kstNow.h, kstNow.m, s.open, s.close)) || KR_SESSIONS[0];
+  const krLine: MarketSession = {
+    id: krSession.id,
+    label: krSession.label,
+    market: "kr",
+    open: krSession.open,
+    close: krSession.close,
+    isOpen: isKrWeekday && inRange(kstNow.h, kstNow.m, krSession.open, krSession.close),
+    timeLabel: krSession.timeLabel,
   };
 
-  const usSessions: MarketSession[] = US_SESSIONS_ET.map((s) => {
-    const converted = convertUsSession(s, offset);
-    return {
-      ...converted,
-      market: "us" as const,
-      isOpen: isUsWeekday && inRange(kstNow.h, kstNow.m, converted.open, converted.close),
-    };
-  });
+  // 미국: 현재 열린 세션 찾기
+  const usConverted = US_SESSIONS_ET.map((s) => convertUsSession(s, offset));
+  const activeUs = usConverted.find((s) => inRange(kstNow.h, kstNow.m, s.open, s.close));
+  const usLine: MarketSession = activeUs
+    ? { ...activeUs, market: "us", isOpen: isUsWeekday && inRange(kstNow.h, kstNow.m, activeUs.open, activeUs.close) }
+    : { id: "us-closed", label: "해외 장종료", market: "us", open: 0, close: 0, isOpen: false, timeLabel: "—" };
 
-  return [krRegular, ...usSessions];
+  return [krLine, usLine];
 }
