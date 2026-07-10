@@ -19,6 +19,12 @@
 
 # production
 /build
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
 
 # misc
 .DS_Store

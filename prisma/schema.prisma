@@ -18,6 +18,8 @@ model User {
   holdings          Holding[]
   vrStrategies      VrStrategy[]
   brokerCredentials BrokerCredential[]
+  brokerConnections BrokerConnection[]
+  syncRequests      SyncRequest[]
   watchlist         WatchlistItem[]
   notifications     Notification[]
 }
@@ -145,6 +147,44 @@ model BrokerCredential {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, broker])
+}
+
+model BrokerConnection {
+  id              String    @id @default(cuid())
+  userId          String
+  broker          String
+  accountNoMasked String?
+  status          String    @default("connected")
+  connectedAt     DateTime  @default(now())
+  lastSyncedAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, broker])
+  @@index([userId])
+  @@index([userId, status])
+}
+
+model SyncRequest {
+  id                   String    @id @default(cuid())
+  userId               String
+  broker               String?
+  status               String    @default("requested")
+  requestedAt          DateTime  @default(now())
+  startedAt            DateTime?
+  completedAt          DateTime?
+  errorMessage         String?
+  bridgeTokenHash      String
+  bridgeTokenExpiresAt DateTime
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([bridgeTokenExpiresAt])
 }
 
 model Notification {

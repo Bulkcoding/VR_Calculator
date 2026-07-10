@@ -1,0 +1,1104 @@
+<Window x:Class="ReValue.SyncBridge.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="ReValue Sync Bridge"
+        Width="1120"
+        Height="760"
+        MinWidth="1040"
+        MinHeight="680"
+        Loaded="Window_Loaded"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="CanResizeWithGrip"
+        Topmost="True"
+        Background="Transparent"
+        FontFamily="Pretendard, Segoe UI">
+    <Window.Resources>
+        <SolidColorBrush x:Key="TextPrimary" Color="#111827" />
+        <SolidColorBrush x:Key="TextSecondary" Color="#334155" />
+        <SolidColorBrush x:Key="TextMuted" Color="#64748B" />
+        <SolidColorBrush x:Key="Surface" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="SurfaceSoft" Color="#F8FAFC" />
+        <SolidColorBrush x:Key="SurfaceHover" Color="#F1F6FD" />
+        <SolidColorBrush x:Key="Line" Color="#E5EAF1" />
+        <SolidColorBrush x:Key="Blue" Color="#0B6BFF" />
+        <SolidColorBrush x:Key="BlueSoft" Color="#EAF3FF" />
+        <SolidColorBrush x:Key="Green" Color="#16A34A" />
+
+        <DropShadowEffect x:Key="SoftShadow" Color="#1E293B" Direction="270" ShadowDepth="10" BlurRadius="26" Opacity="0.10" />
+        <DropShadowEffect x:Key="LiftShadow" Color="#0F172A" Direction="270" ShadowDepth="8" BlurRadius="22" Opacity="0.14" />
+        <DropShadowEffect x:Key="FieldShadow" Color="#0F172A" Direction="270" ShadowDepth="3" BlurRadius="10" Opacity="0.06" />
+
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Surface}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Padding" Value="24" />
+            <Setter Property="Effect" Value="{StaticResource SoftShadow}" />
+        </Style>
+
+        <Style x:Key="SoftPanel" TargetType="Border">
+            <Setter Property="Background" Value="#F8FBFF" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="RoundedTextBox" TargetType="{x:Type TextBox}">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="14,0,36,0" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#1F2937" />
+            <Setter Property="CaretBrush" Value="{StaticResource Blue}" />
+            <Setter Property="Background" Value="#F8FAFC" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Grid>
+                            <Border x:Name="FieldChrome"
+                                    CornerRadius="10"
+                                    BorderThickness="0"
+                                    Padding="{TemplateBinding Padding}"
+                                    Effect="{StaticResource FieldShadow}">
+                                <Border.Background>
+                                    <SolidColorBrush Color="#F8FAFC" />
+                                </Border.Background>
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              VerticalAlignment="Center"
+                                              Focusable="False"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalScrollBarVisibility="Hidden" />
+                            </Border>
+                            <Border x:Name="FocusRing" CornerRadius="10" BorderBrush="#6EA8FF" BorderThickness="1.4" Opacity="0" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="FieldChrome"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#FFFFFF"
+                                                            Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="FieldChrome"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#F8FAFC"
+                                                            Duration="0:0:0.18" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusRing"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.14" />
+                                            <ColorAnimation Storyboard.TargetName="FieldChrome"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#FFFFFF"
+                                                            Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusRing"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="RoundedPasswordBox" TargetType="{x:Type PasswordBox}">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="14,0,36,0" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#1F2937" />
+            <Setter Property="CaretBrush" Value="{StaticResource Blue}" />
+            <Setter Property="Background" Value="#F8FAFC" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type PasswordBox}">
+                        <Grid>
+                            <Border x:Name="FieldChrome"
+                                    CornerRadius="10"
+                                    BorderThickness="0"
+                                    Padding="{TemplateBinding Padding}"
+                                    Effect="{StaticResource FieldShadow}">
+                                <Border.Background>
+                                    <SolidColorBrush Color="#F8FAFC" />
+                                </Border.Background>
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              VerticalAlignment="Center"
+                                              Focusable="False"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalScrollBarVisibility="Hidden" />
+                            </Border>
+                            <Border x:Name="FocusRing" CornerRadius="10" BorderBrush="#6EA8FF" BorderThickness="1.4" Opacity="0" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="FieldChrome"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#FFFFFF"
+                                                            Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="FieldChrome"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#F8FAFC"
+                                                            Duration="0:0:0.18" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusRing"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.14" />
+                                            <ColorAnimation Storyboard.TargetName="FieldChrome"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#FFFFFF"
+                                                            Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusRing"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ComboToggleButton" TargetType="{x:Type ToggleButton}">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernComboBox" TargetType="{x:Type ComboBox}">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#1F2937" />
+            <Setter Property="Background" Value="#F8FAFC" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="MaxDropDownHeight" Value="240" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Grid>
+                            <Border x:Name="FieldChrome" CornerRadius="10" BorderThickness="0" Effect="{StaticResource FieldShadow}">
+                                <Border.Background>
+                                    <SolidColorBrush Color="#F8FAFC" />
+                                </Border.Background>
+                            </Border>
+                            <Border x:Name="FocusRing" CornerRadius="10" BorderBrush="#6EA8FF" BorderThickness="1.4" Opacity="0" />
+                            <ToggleButton x:Name="DropDownToggle"
+                                          Style="{StaticResource ComboToggleButton}"
+                                          ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Grid>
+                                    <ContentPresenter x:Name="ContentSite"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      Margin="14,0,42,0"
+                                                      HorizontalAlignment="Left"
+                                                      VerticalAlignment="Center"
+                                                      IsHitTestVisible="False" />
+                                    <Path x:Name="Arrow"
+                                          Width="9"
+                                          Height="5"
+                                          Data="M 0 0 L 4.5 5 L 9 0 Z"
+                                          Fill="#64748B"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,16,0"
+                                          RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform>
+                                            <RotateTransform Angle="0" />
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </Grid>
+                            </ToggleButton>
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Fade"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}">
+                                <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Margin="0,8,0,0"
+                                        Background="White"
+                                        CornerRadius="12"
+                                        Padding="6"
+                                        Effect="{StaticResource LiftShadow}">
+                                    <ScrollViewer MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="FieldChrome"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#FFFFFF"
+                                                            Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="FieldChrome"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#F8FAFC"
+                                                            Duration="0:0:0.18" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusRing"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusRing"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Arrow"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                             To="180"
+                                                             Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Arrow"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                             To="0"
+                                                             Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type ComboBoxItem}">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                        <Border x:Name="ItemChrome" Background="Transparent" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemChrome" Property="Background" Value="#EEF6FF" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemChrome" Property="Background" Value="#EAF3FF" />
+                                <Setter Property="Foreground" Value="{StaticResource Blue}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="{x:Type Button}">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="{StaticResource Blue}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <TranslateTransform x:Name="ButtonOffset" Y="0" />
+                            </Grid.RenderTransform>
+                            <Border x:Name="ButtonChrome" Background="{TemplateBinding Background}" CornerRadius="10" Effect="{StaticResource FieldShadow}" />
+                            <Border x:Name="HoverLayer" Background="#FFFFFF" CornerRadius="10" Opacity="0" />
+                            <Border x:Name="FocusRing" BorderBrush="#93C5FD" BorderThickness="1.4" CornerRadius="10" Opacity="0" />
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="HoverLayer"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0.16"
+                                                             Duration="0:0:0.12" />
+                                            <DoubleAnimation Storyboard.TargetName="ButtonOffset"
+                                                             Storyboard.TargetProperty="Y"
+                                                             To="-1"
+                                                             Duration="0:0:0.12" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="HoverLayer"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.16" />
+                                            <DoubleAnimation Storyboard.TargetName="ButtonOffset"
+                                                             Storyboard.TargetProperty="Y"
+                                                             To="0"
+                                                             Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="HoverLayer" Property="Background" Value="#0F172A" />
+                                <Setter TargetName="HoverLayer" Property="Opacity" Value="0.14" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusRing"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="FocusRing"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="{x:Type Button}" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Foreground" Value="#0B6BFF" />
+            <Setter Property="Background" Value="#F2F7FF" />
+        </Style>
+
+        <Style x:Key="ChromeButton" TargetType="{x:Type Button}">
+            <Setter Property="Width" Value="44" />
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#334155" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid>
+                            <Border x:Name="ChromeSurface" Background="Transparent" CornerRadius="10" Margin="4" />
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="ChromeSurface"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#EEF3F8"
+                                                            Duration="0:0:0.12" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="ChromeSurface"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#00FFFFFF"
+                                                            Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ChromeSurface" Property="Background" Value="#E2EAF4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="NavButton" TargetType="{x:Type Button}">
+            <Setter Property="Height" Value="48" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <TranslateTransform x:Name="NavOffset" Y="0" />
+                            </Grid.RenderTransform>
+                            <Border x:Name="NavChrome" Background="{TemplateBinding Background}" CornerRadius="10" />
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="NavOffset"
+                                                             Storyboard.TargetProperty="Y"
+                                                             To="-1"
+                                                             Duration="0:0:0.12" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="NavOffset"
+                                                             Storyboard.TargetProperty="Y"
+                                                             To="0"
+                                                             Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                                <Setter TargetName="NavChrome" Property="Background" Value="#F1F6FD" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="NavButtonActive" TargetType="{x:Type Button}" BasedOn="{StaticResource NavButton}">
+            <Setter Property="Foreground" Value="#075EEA" />
+            <Setter Property="Background" Value="#EAF3FF" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style TargetType="{x:Type ListBox}">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        </Style>
+
+        <Style TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <TranslateTransform x:Name="ItemOffset" Y="0" />
+                            </Grid.RenderTransform>
+                            <Border x:Name="ItemChrome" Background="Transparent" CornerRadius="10" Padding="8,7" />
+                            <ContentPresenter Margin="8,7" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ItemChrome" Property="Background" Value="#F4F8FD" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ItemOffset"
+                                                             Storyboard.TargetProperty="Y"
+                                                             To="-1"
+                                                             Duration="0:0:0.12" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ItemOffset"
+                                                             Storyboard.TargetProperty="Y"
+                                                             To="0"
+                                                             Duration="0:0:0.16" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type DataGrid}">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="GridLinesVisibility" Value="None" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="RowHeaderWidth" Value="0" />
+            <Setter Property="RowBackground" Value="White" />
+            <Setter Property="AlternatingRowBackground" Value="#F8FBFF" />
+            <Setter Property="HorizontalGridLinesBrush" Value="Transparent" />
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        </Style>
+
+        <Style TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Background" Value="#F7FAFD" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
+                        <Border x:Name="HeaderChrome" Background="{TemplateBinding Background}" CornerRadius="8,8,0,0" Padding="8,0">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HeaderChrome" Property="Background" Value="#EDF5FF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Foreground" Value="#1F2937" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border x:Name="CellChrome" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="CellChrome" Property="Background" Value="#EAF3FF" />
+                                <Setter Property="Foreground" Value="#075EEA" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridRow}">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F1F7FF" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Border Margin="4"
+            Background="#F8FAFC"
+            BorderThickness="0"
+            CornerRadius="12"
+            ClipToBounds="True"
+            Effect="{StaticResource SoftShadow}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="54" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border x:Name="TitleBar"
+                    Grid.Row="0"
+                    Background="White"
+                    BorderBrush="#E5EAF1"
+                    BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="30,0,0,0">
+                        <Grid Width="28" Height="28">
+                            <Border Width="28" Height="28" CornerRadius="7" Background="#16A34A" />
+                            <TextBlock Text="R" Foreground="White" FontSize="19" FontWeight="Black" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Text="ReValue" Foreground="#16A34A" FontSize="17" FontWeight="Bold" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <TextBlock Text="Sync Bridge" Foreground="#0F172A" FontSize="17" FontWeight="Bold" VerticalAlignment="Center" Margin="7,0,0,0" />
+                        <Border x:Name="StatusBadge" Background="#EAF8EF" CornerRadius="16" Padding="12,5" Margin="28,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="7" Height="7" Fill="#16A34A" Margin="0,0,7,0" VerticalAlignment="Center" />
+                                <TextBlock x:Name="StatusText" Text="연결됨" Foreground="#15803D" FontSize="12" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource ChromeButton}" Content="−" Click="MinimizeButton_Click" />
+                        <Button Style="{StaticResource ChromeButton}" Content="□" FontSize="14" Click="MaximizeButton_Click" />
+                        <Button Style="{StaticResource ChromeButton}" Content="×" FontSize="24" Click="CloseButton_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="232" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Visibility="Collapsed">
+                    <TextBlock x:Name="RequestIdText" />
+                    <TextBlock x:Name="CallbackUrlText" />
+                    <TextBlock x:Name="EndpointText" />
+                </StackPanel>
+
+                <Border Background="White" BorderBrush="#E5EAF1" BorderThickness="0,0,1,0">
+                    <Grid Margin="20,26,14,24">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel>
+                            <Button Style="{StaticResource NavButton}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="▦" FontSize="20" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                                    <TextBlock Text="Dashboard" FontSize="14" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{StaticResource NavButtonActive}" Margin="0,8,0,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="↗" FontSize="20" FontWeight="Bold" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                                    <TextBlock Text="Broker Connection" FontSize="14" FontWeight="SemiBold" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{StaticResource NavButton}" Margin="0,8,0,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="◷" FontSize="20" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                                    <TextBlock Text="Sync History" FontSize="14" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{StaticResource NavButton}" Margin="0,8,0,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="⚙" FontSize="18" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                                    <TextBlock Text="Settings" FontSize="14" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <Border Grid.Row="1" Style="{StaticResource SoftPanel}" Padding="16,14" Margin="0,0,0,18">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="▿" FontSize="18" FontWeight="Bold" Foreground="#16A34A" VerticalAlignment="Top" />
+                                <StackPanel Margin="12,0,0,0">
+                                    <TextBlock Text="보안 연결" FontSize="13" FontWeight="SemiBold" Foreground="#111827" />
+                                    <TextBlock Text="데이터는 암호화되어&#x0a;안전하게 전송됩니다." FontSize="11" Foreground="#64748B" LineHeight="17" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Grid.Row="2" Text="v1.0.0" FontSize="11" Foreground="#94A3B8" />
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Column="1" Margin="20,18,24,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="350" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Style="{StaticResource Card}" Padding="26,22,26,20">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="1" />
+                                <ColumnDefinition Width="365" />
+                            </Grid.ColumnDefinitions>
+
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="증권사 연동" FontSize="24" FontWeight="Bold" Foreground="#111827" />
+
+                                <Grid Grid.Row="1" Margin="0,22,20,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="156" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="46" />
+                                        <RowDefinition Height="46" />
+                                        <RowDefinition Height="46" />
+                                        <RowDefinition Height="46" />
+                                        <RowDefinition Height="38" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="증권사 선택" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="BrokerCombo"
+                                              Grid.Row="0"
+                                              Grid.Column="1"
+                                              Style="{StaticResource ModernComboBox}"
+                                              Height="38"
+                                              DisplayMemberPath="Name"
+                                              SelectedValuePath="Id"
+                                              SelectionChanged="BrokerCombo_SelectionChanged" />
+
+                                    <TextBlock Grid.Row="1" Text="API Key / App Key" Style="{StaticResource FieldLabel}" />
+                                    <Grid Grid.Row="1" Grid.Column="1">
+                                        <TextBox x:Name="AppKeyBox" Style="{StaticResource RoundedTextBox}" Text="••••••••••••••••••••" />
+                                        <TextBlock Text="⊙" Foreground="#64748B" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0" />
+                                    </Grid>
+
+                                    <TextBlock Grid.Row="2" Text="Secret Key" Style="{StaticResource FieldLabel}" />
+                                    <Grid Grid.Row="2" Grid.Column="1">
+                                        <PasswordBox x:Name="AppSecretBox" Style="{StaticResource RoundedPasswordBox}" Password="sample-secret" />
+                                        <TextBlock Text="⊙" Foreground="#64748B" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0" />
+                                    </Grid>
+
+                                    <TextBlock Grid.Row="3" Text="계좌번호 (Account No)" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="AccountNoBox" Grid.Row="3" Grid.Column="1" Style="{StaticResource RoundedTextBox}" Text="123-456-7890" />
+
+                                    <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="ⓘ" Foreground="#64748B" FontSize="15" VerticalAlignment="Center" />
+                                        <TextBlock Text="사전 IP 등록이 필요합니다." Foreground="#64748B" FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                        <TextBlock Text="(현재 IP: " Foreground="#64748B" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                        <TextBlock Text="123.45.67.89" Foreground="#0B6BFF" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <TextBlock Text=")" Foreground="#64748B" FontSize="12" VerticalAlignment="Center" />
+                                    </StackPanel>
+
+                                    <CheckBox x:Name="DemoModeBox" Grid.Row="4" Visibility="Collapsed" IsChecked="True" />
+                                    <TextBlock x:Name="SecretHintText" Grid.Row="4" Visibility="Collapsed" />
+                                    <Button x:Name="SaveCredentialButton" Grid.Row="4" Visibility="Collapsed" Click="SaveCredentials_Click" />
+                                    <Button x:Name="RegisterSchemeButton" Grid.Row="4" Visibility="Collapsed" Click="RegisterScheme_Click" />
+                                </Grid>
+                            </Grid>
+
+                            <Border Grid.Column="1" Background="#E5EAF1" Margin="8,52,22,0" />
+
+                            <Grid Grid.Column="2" Margin="0,48,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="116" />
+                                    <RowDefinition Height="56" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="연동 상태" FontSize="17" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,12" />
+
+                                <Border Grid.Row="1" Style="{StaticResource SoftPanel}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="38" />
+                                            <RowDefinition Height="38" />
+                                            <RowDefinition Height="38" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="API 연결 확인" Foreground="#334155" FontSize="13" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                        <Border Grid.Column="1" Background="#DDF7E8" CornerRadius="11" Padding="10,4" Margin="0,7,12,7">
+                                            <TextBlock x:Name="ApiStatusText" Text="정상" Foreground="#15803D" FontSize="12" FontWeight="SemiBold" />
+                                        </Border>
+
+                                        <TextBlock Grid.Row="1" Text="인증 완료" Foreground="#334155" FontSize="13" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                        <Border Grid.Row="1" Grid.Column="1" Background="#DDF7E8" CornerRadius="11" Padding="10,4" Margin="0,7,12,7">
+                                            <TextBlock x:Name="CredentialStatusText" Text="완료" Foreground="#15803D" FontSize="12" FontWeight="SemiBold" />
+                                        </Border>
+
+                                        <TextBlock Grid.Row="2" Text="마지막 동기화 시간" Foreground="#334155" FontSize="13" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                        <TextBlock x:Name="LastSyncText" Grid.Row="2" Grid.Column="1" Text="2025-05-20 14:35:22" Foreground="#334155" FontSize="13" VerticalAlignment="Center" Margin="0,0,14,0" />
+                                    </Grid>
+                                </Border>
+
+                                <Button x:Name="SyncButton"
+                                        Grid.Row="2"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Margin="0,12,0,0"
+                                        Click="SyncButton_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="☁" FontSize="17" Margin="0,0,8,0" />
+                                        <TextBlock Text="보유주식 불러오기" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="1" Margin="0,16,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="340" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource Card}" Padding="22,18">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <DockPanel>
+                                    <TextBlock Text="보유주식 미리보기" FontSize="17" FontWeight="Bold" Foreground="#111827" DockPanel.Dock="Left" />
+                                    <TextBlock x:Name="HoldingCountText" Text="총 5개 종목" Foreground="#64748B" FontSize="12" HorizontalAlignment="Right" />
+                                </DockPanel>
+
+                                <DataGrid x:Name="HoldingsGrid"
+                                          Grid.Row="1"
+                                          Margin="0,12,0,0"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          IsReadOnly="True"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="None"
+                                          BorderThickness="0"
+                                          RowHeight="36"
+                                          FontSize="13"
+                                          Background="White"
+                                          AlternatingRowBackground="#FBFDFF">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="종목명" Binding="{Binding Name}" Width="*" />
+                                        <DataGridTextColumn Header="수량" Binding="{Binding Quantity}" Width="86" />
+                                        <DataGridTextColumn Header="평균단가" Binding="{Binding AvgPrice, StringFormat={}{0:N0}}" Width="104" />
+                                        <DataGridTextColumn Header="현재가" Binding="{Binding CurrentPrice, StringFormat={}{0:N0}}" Width="104" />
+                                        <DataGridTextColumn Header="평가금액" Binding="{Binding MarketValue, StringFormat={}{0:N0}}" Width="110" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <Grid Grid.Row="2" Margin="0,14,0,0">
+                                    <TextBlock Text="총 5개 종목" FontSize="12" Foreground="#64748B" HorizontalAlignment="Left" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <TextBlock Text="총 평가금액" FontSize="13" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center" />
+                                        <TextBlock Text="5,581,000 원" FontSize="16" FontWeight="Bold" Foreground="#0B6BFF" Margin="26,0,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource Card}" Padding="22,18">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="동기화 로그" FontSize="17" FontWeight="Bold" Foreground="#111827" />
+
+                                <ListBox x:Name="LogList" Grid.Row="1" Margin="0,14,0,0">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,11">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="22" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="64" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="16" Height="16" CornerRadius="8" Background="#4DB77A" VerticalAlignment="Center">
+                                                    <TextBlock Text="✓" Foreground="White" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="{Binding Message}" Foreground="#334155" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="{Binding TimeText}" Foreground="#64748B" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <Button Grid.Row="2" Height="34" Style="{StaticResource SecondaryButton}" Margin="0,12,0,0">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="☷" FontSize="14" Foreground="#64748B" Margin="0,0,8,0" />
+                                        <TextBlock Text="로그 보기" Foreground="#334155" FontSize="12" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <Border x:Name="ToastBorder"
+                            Grid.Row="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Width="300"
+                            Height="90"
+                            Margin="0,0,0,20"
+                            Background="White"
+                            BorderThickness="0"
+                            CornerRadius="10"
+                            Padding="16"
+                            Effect="{StaticResource SoftShadow}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="28" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="42" Height="42" CornerRadius="21" Background="#16A34A" VerticalAlignment="Center">
+                                <TextBlock Text="✓" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="동기화 완료" FontSize="15" FontWeight="Bold" Foreground="#111827" />
+                                <TextBlock Text="웹에서 최신 보유종목을&#x0a;확인할 수 있어요." FontSize="12" Foreground="#334155" LineHeight="18" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <Button Grid.Column="2"
+                                    Style="{StaticResource ChromeButton}"
+                                    Width="32"
+                                    Height="32"
+                                    Content="×"
+                                    FontSize="22"
+                                    Foreground="#64748B"
+                                    Click="ToastClose_Click" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

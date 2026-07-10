@@ -336,7 +336,7 @@ const formatHoldingBroker = (broker: string) => {
     setSyncingAll(true);
     setSyncResult(null);
 
-    const res = await fetch("/api/brokers/import-all", { method: "POST" });
+    const res = await fetch("/api/brokers/sync-requests", { method: "GET" });
     const data = await res.json().catch(() => null);
 
     if (res.ok) {
@@ -393,16 +393,7 @@ const formatHoldingBroker = (broker: string) => {
         fetchWatchCharts();
       }, 60000);
       // 증권사 연동 자동 묶어오기: 페이지 열자마자 1회 + 이후 30분 주기
-      fetch("/api/brokers/import-all", { method: "POST" })
-        .then((res) => res.json().catch(() => null))
-        .then((data) => { if (data?.ok) fetchHoldings(); })
-        .catch(() => {});
-      const brokerSyncInterval = setInterval(() => {
-        fetch("/api/brokers/import-all", { method: "POST" })
-          .then((res) => res.json().catch(() => null))
-          .then((data) => { if (data?.ok) fetchHoldings(); })
-          .catch(() => {});
-      }, 1800000);
+      const brokerSyncInterval = setInterval(() => undefined, 1800000);
       return () => {
         clearInterval(priceInterval);
         clearInterval(chartInterval);
@@ -582,11 +573,11 @@ const formatHoldingBroker = (broker: string) => {
             <div className="flex items-center gap-2">
               <CurrencyToggle value={displayCurrency} onChange={changeDisplayCurrency} />
               <button
-                onClick={syncAllLinkedBrokers}
-                disabled={syncingAll}
+                onClick={() => setBrokerModal({ open: true, broker: "kis" })}
+                disabled={false}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 transition"
               >
-                {syncingAll ? "묶어오는중..." : "연동계좌 한번에 불러오기"}
+                Sync Bridge로 불러오기
               </button>
             </div>
           }
