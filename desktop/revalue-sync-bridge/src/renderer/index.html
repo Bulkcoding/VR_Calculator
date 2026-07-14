@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReValue Sync Bridge</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="window-shell">
+    <header class="titlebar">
+      <div class="titlebar-drag">
+        <div class="title-brand">
+          <div class="title-brand-icon">R</div>
+          <div>
+            <div class="title-brand-name">ReValue</div>
+            <div class="title-brand-sub">Sync Bridge</div>
+          </div>
+        </div>
+        <div class="titlebar-status" id="titleStatus">ready</div>
+      </div>
+      <div class="titlebar-controls">
+        <button type="button" class="window-button" id="minimizeButton" aria-label="최소화">—</button>
+        <button type="button" class="window-button" id="maximizeButton" aria-label="최대화">□</button>
+        <button type="button" class="window-button danger" id="closeButton" aria-label="닫기">×</button>
+      </div>
+    </header>
+
+    <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="brand-icon">R</div>
+        <div>
+          <div class="brand-title">ReValue</div>
+          <div class="brand-subtitle">Sync Bridge</div>
+        </div>
+      </div>
+      <nav class="nav-list">
+        <button class="nav-item active" data-section="holding-list">Holding List</button>
+        <button class="nav-item" data-section="sync-history">Sync History</button>
+        <button class="nav-item" data-section="settings">Settings</button>
+      </nav>
+      <div class="side-note">
+        <div class="side-note-title">보안 연결</div>
+        <div class="side-note-text">데이터는 HTTPS와 요청 토큰으로 안전하게 전송됩니다.</div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="page-header">
+        <div>
+          <h1 id="pageTitle">Holding List</h1>
+          <p id="pageSubtitle">연동된 보유주식 미리보기와 가져오기를 처리합니다.</p>
+        </div>
+        <div class="status-pill" id="statusPill">ready</div>
+      </header>
+
+      <section class="section active" data-section="holding-list">
+        <div class="card section-card">
+          <div class="section-head">
+            <div>
+              <h2>보유주식 미리보기</h2>
+            </div>
+            <button class="primary-button" id="syncButton">보유주식 불러오기</button>
+          </div>
+          <div class="meta-row">
+            <span id="holdingCount">총 0개 종목</span>
+            <span id="lastSyncText">마지막 동기화: -</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>종목</th>
+                  <th>수량</th>
+                  <th>평균단가</th>
+                  <th>현재가</th>
+                  <th>평가금액</th>
+                </tr>
+              </thead>
+              <tbody id="holdingsBody">
+                <tr><td colspan="5" class="empty-cell">아직 불러온 보유주식이 없습니다.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" data-section="sync-history">
+        <div class="card section-card">
+          <div class="section-head compact">
+            <div>
+              <h2>동기화 로그</h2>
+              <p class="muted">마우스로 드래그해서 로그를 복사할 수 있습니다.</p>
+            </div>
+          </div>
+          <textarea id="logText" class="log-text" readonly></textarea>
+        </div>
+      </section>
+
+      <section class="section" data-section="settings">
+        <div class="card section-card">
+          <div class="section-head compact">
+            <div>
+              <h2>증권사 연동</h2>
+              <p class="muted">연동 정보만 관리합니다. 보유주식 불러오기는 Holding List에서 실행합니다.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <label class="field-block broker-select-field">
+              <span>증권사 선택</span>
+              <button type="button" id="brokerSelectButton" class="broker-select-button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="brokerSelectLabel">토스증권</span>
+                <span class="broker-select-chevron">▾</span>
+              </button>
+              <div id="brokerSelectMenu" class="broker-select-menu hidden" role="listbox"></div>
+            </label>
+
+            <label class="field-block full">
+              <span>API Key</span>
+              <input id="appKeyInput" type="text" autocomplete="off" />
+            </label>
+
+            <label class="field-block full">
+              <span>Secret Key</span>
+              <input id="secretInput" type="password" autocomplete="off" />
+            </label>
+
+            <label class="field-block full">
+              <span>계좌번호</span>
+              <input id="accountNoInput" type="text" autocomplete="off" />
+            </label>
+          </div>
+
+          <div class="info-row">
+            <div class="tooltip-wrap">
+              <button type="button" class="info-icon" aria-label="공인 IP 안내">i</button>
+              <div class="tooltip-bubble">토스증권 연동은 현재 보이는 공인 IP에서만 동작합니다.</div>
+            </div>
+            <span class="ip-label">현재 PC 공인 IP:</span>
+            <span id="publicIpText" class="public-ip">확인 중…</span>
+          </div>
+
+          <div class="status-row">
+            <span id="credentialStatus" class="muted">미등록</span>
+            <div class="button-row">
+              <button class="secondary-button" id="deleteButton">삭제</button>
+              <button class="primary-button" id="saveButton">인증 정보 저장</button>
+            </div>
+          </div>
+
+          <div class="update-card">
+            <div class="section-head compact">
+              <div>
+                <h2>앱 업데이트</h2>
+                <p class="muted">새 배포가 GitHub Releases에 올라오면 여기서 바로 확인하고 적용합니다.</p>
+              </div>
+            </div>
+            <div class="update-meta-row">
+              <span id="currentVersionText" class="muted">현재 버전 -</span>
+              <span id="latestVersionBadge" class="update-badge">확인 대기</span>
+            </div>
+            <p id="updateStatusText" class="update-status">업데이트 확인 중…</p>
+            <ul id="updateNotes" class="update-notes hidden"></ul>
+            <div class="status-row">
+              <span id="updateLastCheckedText" class="muted">마지막 확인: -</span>
+              <div class="button-row">
+                <button class="secondary-button" id="checkUpdateButton">지금 확인</button>
+                <button class="primary-button" id="applyUpdateButton" disabled>업데이트 적용</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="dialogBackdrop" class="dialog-backdrop hidden" aria-hidden="true">
+    <div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <div class="dialog-icon" id="dialogIcon">!</div>
+      <div class="dialog-content">
+        <div class="dialog-title" id="dialogTitle">알림</div>
+        <div class="dialog-message" id="dialogMessage"></div>
+      </div>
+      <button type="button" class="dialog-close" id="dialogCloseButton">확인</button>
+    </div>
+  </div>
+
+  </div>
+
+  <script src="./renderer.js"></script>
+</body>
+</html>

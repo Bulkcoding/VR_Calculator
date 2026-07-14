@@ -1,0 +1,78 @@
+{
+  "name": "revalue-sync-bridge-electron",
+  "productName": "ReValue Sync Bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron desktop bridge for ReValue broker synchronization",
+  "main": "src/main.js",
+  "scripts": {
+    "postinstall": "node scripts/ensure-electron.js",
+    "install-electron": "node scripts/ensure-electron.js",
+    "start": "node scripts/start.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer/renderer.js && node --check src/services/kisClient.js && node --check src/services/tossClient.js && node --check src/services/updateService.js && node --check scripts/electronBinary.js && node --check scripts/ensure-electron.js && node --check scripts/start.js && node --check scripts/package-win.js && node -e \"const { parseDeepLink } = require('./src/services/deepLink'); const parsed = parseDeepLink('revalue://sync?requestId=req-1&token=token-1&callbackUrl=https%3A%2F%2Fexample.com%2Fapi%2Fbridge%2Fsync&broker=toss'); if (!parsed || parsed.broker !== 'toss') throw new Error('deep link parse failed'); console.log('check:ok');\"",
+    "package:win": "node scripts/package-win.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bulkcoding/VR_Calculator.git"
+  },
+  "revalueUpdate": {
+    "owner": "Bulkcoding",
+    "repo": "VR_Calculator",
+    "installerAssetPrefix": "ReValue Sync Bridge-",
+    "portableAssetPrefix": "ReValue-Sync-Bridge-Portable-",
+    "checkIntervalMinutes": 2
+  },
+  "build": {
+    "appId": "com.revalue.syncbridge",
+    "productName": "ReValue Sync Bridge",
+    "electronVersion": "37.10.3",
+    "directories": {
+      "output": "release"
+    },
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "asar": true,
+    "executableName": "ReValue Sync Bridge",
+    "protocols": [
+      {
+        "name": "ReValue Sync Bridge",
+        "schemes": [
+          "revalue"
+        ]
+      }
+    ],
+    "win": {
+      "icon": ".packaging/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "ReValue Sync Bridge"
+    },
+    "portable": {
+      "artifactName": "ReValue-Sync-Bridge-Portable-${version}-${arch}.${ext}"
+    }
+  },
+  "devDependencies": {
+    "@electron/get": "^2.0.0",
+    "electron-builder": "^26.0.12",
+    "extract-zip": "^2.0.1",
+    "png-to-ico": "^2.1.8"
+  }
+}
