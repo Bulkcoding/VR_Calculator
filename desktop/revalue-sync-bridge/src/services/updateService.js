@@ -58,11 +58,19 @@ function isPortableRuntime(currentExePath = process.execPath) {
     || Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
 }
 
+function normalizeAssetName(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function findReleaseAsset(assets, { prefix, portable }) {
+  const normalizedPrefix = normalizeAssetName(prefix);
   return assets.find((asset) => {
     const name = String(asset?.name || '');
     if (!name.toLowerCase().endsWith('.exe')) return false;
-    if (!name.startsWith(prefix)) return false;
+    if (!normalizeAssetName(name).startsWith(normalizedPrefix)) return false;
     return portable ? /portable/i.test(name) : !/portable/i.test(name);
   }) || null;
 }
